@@ -1,0 +1,68 @@
+AKS Virtual Nodes: Serverless
+
+	virtual kubelet+Azure Container Instance (ACI) = Azure Virtual Nodes on AKS
+
+1. Virtual kubelet:
+	
+	1. Virtual kubelet is an opensource kubernetes kubelet implementation that acts as kubelet for the purposes of connecting k8s to other APIs.
+	2. This allows the k8s worker nodes to be backed by other services like Azure ACI and AWS Fargate.
+	3. The primary scenario for VK is enabling the extension of the kubernetes API into serverless container platforms like Azure ACI and AWS Fargate.
+	4. Virutal kubelet registers itself as a "node" and allows developers to deploy pods and containers with their own APIs.
+	5. Features:
+		1. Create, delete and update pods
+		2. Container logs, exec, and metrics
+		3. get pod, pods and pod status, capacity
+		4. node addresses, node capacity, node daemon endpoints.
+		5. operating system.
+		6. bring our own virtual network.
+
+2. Azure Container Instances: ACI
+
+	1. Provieds a hosted environment for running containers in Azure.
+	2. When using ACI, there is no need to manage the underlying compute infrstructure, Azure handles will manages for us.
+	3. When running containers in ACI, per second for running container will be charged.
+	4. The Azure Container Instances (ACI) provider for the Virtual kubelet configures an ACI instance as a node in any k8s cluster.
+	5. When using the virtual kubelet ACI provider, Pods can be scheduled on an ACI instance as if the ACI instance is a standard k8s node.
+	6. This configuration allows us to take advantage of both the capabilities of k8s and the management value and cost benefit of ACI.
+
+3. AKS- Virtual Nodes:
+
+	1. we can run k8s workloads on serverless infrastructure of azure which is called Virtual Nodes.
+	2. Advantages:
+		scale our applications rapidly without any limitations.
+		Quick Provisioning of pods using virutal Nodes when compared to cluster autoscaler.
+		Cluster Autoscaler need to provision the Nodes in a managed node pool first then only k8s can schedule pods on those
+		newly provisioned nodes.
+	3. Virtual Nodes requires AKS clusters with Azure CNI Networking.
+	4. AKS Virtual Nodes: NodeSelector Manifest File
+
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  name: app1-nginx-deployment
+	  labels:
+	    app: app1-nginx
+	spec:
+	  replicas: 2
+	  selectory:
+	    matchlabels:
+	      app: app1-nginx
+	template:
+	  metadata:
+	    labels: 
+	      app: app1-nginx
+	  spec:
+	    containers:
+	      - name: app1-nginx
+		image: stacksimply/kube-nginxapp1:1.0.0
+		ports:
+		  - containerPort: 80
+	    nodeSelector:
+	      kubernetes.io/role: agent
+	      beta.kubernetes.io/os: linux
+	      type: virtual kubelet
+	    tolerations:
+	    - key: virtual-kubelet.io/provider
+	      operator: Exists
+	    - key: azure.com/aci
+	      effect: NoSchedule

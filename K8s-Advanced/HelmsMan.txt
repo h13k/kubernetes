@@ -1,0 +1,45 @@
+Helmsman is a Helm Charts as Code tool which allows you to automate the deployment/management of your Helm charts from version-controlled code.
+
+What is Helmsman?
+		
+	Helmsman is a Helm Charts (k8s applications) as Code tool which allows you to automate the deployment/management of your Helm charts from 
+	version controlled code.
+
+	TOML is a file format for configuration files:
+		"TOML" is an acronym for "Tom's Obvious, Minimal Language"[6] referring to its creator, Tom Preston-Werner.
+	
+	Use cases
+
+		TOML is used in a variety of settings (some related to its creator), such as:
+
+			1. Static site generators like Jekyll and Hugo
+			2. Continuous integration on e.g. GitHub and GitLab
+			3. Python programming language
+			4. Rust programming language
+
+	Helmsman uses a simple declarative TOML file to allow you to describe a desired state for your k8s applications as in the example toml file. Alternatively YAML declaration is also acceptable example yaml file.
+
+	The desired state file (DSF) follows the desired state specification.
+
+	Helmsman sees what you desire, validates that your desire makes sense (e.g. that the charts you desire are available in the repos you defined), 
+	compares it with the current state of Helm and figures out what to do to make your desire come true.
+
+	To plan without executing:
+
+		helmsman -f example.toml
+
+	To plan and execute the plan:
+
+		helmsman --apply -f example.toml
+
+	To show debugging details:
+
+		helmsman --debug --apply -f example.toml
+
+	To run a dry-run:
+
+		helmsman --debug --dry-run -f example.toml
+
+	To limit execution to specific application:
+
+		helmsman --debug --dry-run --target artifactory -f example.toml

@@ -1,0 +1,125 @@
+AKS K8s - RBAC with Azure AD: 
+
+	(RBAC - Role, Role Binding, Cluster Role, Cluster Role Binding & Azure AD: Active Directory, AD Groups, AD Users).
+
+	RBAC Fundamentals:
+		Subjects, API Groups, Resources, Verbs
+
+	Subjects: Users or processes that need access to k9s API
+		  kind: Group, User			
+		  kind: Service Account
+
+	API Groups, Resources: The k8s API objects that we grant access - (core, extensions, apps, batch - API's) & 
+			(Pods, Deployments, Services, StatefullSets - resources)
+			Those API's and resources will be accessed by Subjects  
+	
+	Verbs: List of actions that can be taken on a resource
+		(Create, List, Watch, Delete, Patch, get, Replace, Read)
+
+	Role, Role Binding are Namespace level restrictions in RBAC
+	Cluster Role, Cluster Role Binding are cluster level restrictions in RBAC
+
+	Role: Can Only be able to access to resources within a single namespace.
+
+	Namespace: Creating this role in dev namespace
+	API Groups: core, extensions, apps
+	Resources: pods, deployments, services
+	Verbs: Create, List, Delete, Patch
+	
+	Manifest File:
+
+		kind: Role
+		apiVersion: rbac.authorization.k8s.io/v1
+		metadata:
+		  name: dev-user-full-access-role
+		  namespace: dev
+		rules:
+		- apiGroups: ["", "extensions", "apps"]
+		  resources: ["*"]
+		  verbs: ["*"]
+		- apiGroups: ["batch"]
+		  resources:
+		  - job
+		  - cronjobs
+		  verbs: ["*"]
+
+	Role Binding: It is used to tie the "Role" and "Subject" together
+			Integrating Azure AD Group & K8s RBAC
+
+	Namespace: Creating this role binding in dev namespace.
+	Subjects: Group: Azure AD Group with Object ID has full accesss to namespace dev in AKS Cluster.	
+
+	Manifest File:
+
+		kind: RoleBinding	
+		apiVersion: rbac.authoraization.k8s.io/v1
+		metadata:
+		  name: dev-user-access-rolebinding
+		  namespace: dev
+		roleRef:
+		  apiGroup: rbac.authoraization.k8s.io
+		  kind: Role
+		  name: dev-user-full-access-role
+		subjects:
+		- kind: Group
+		  namespace: dev
+		  name: "e6dcdae4-e9ff-4261-81e6-0d08537c4cf8"
+		Note: GroupObjectId #our Azure AD Group Object ID   
+
+	Create AD Group, Role Assignment, and give user access for Dev environments:
+	
+		Get Azure AKS Cluster Id:
+		AKS_CLUSTER_ID = $(az aks show --resource-group aks-rg3 --name aksdemo3 --query id -o tsv) - echo $(AKS_CLUSTER_ID).
+	
+		Create Azure AD Group
+		DEV_AKS_Group_ID = $(az ad group create --display-name devaksteam --mail-nickname devaksteam --query objectId -o -tsv) - echo $(DEV_AKS_Group_ID)
+
+		Create Role Assignment
+		az role assignament create \
+		  --assignee $DEV_AKS_Group_ID \
+		  --role "Azure Kubernetes Service Cluster User Role" \
+		  --scope $AKS_CLUSTER_ID
+		
+		Create User and associate user to group 
+		az ad group member add --group devaksteam --member-id $DEV_AKS_USER_OBJECT_ID
+
+	Azure AKS K8s RBAC Azure Active Directory:( (RBAC - Cluster Role, Cluster Role Binding), (Active Directory - AD Groups, AD Users) )
+
+		A Cluster Role can be used to grant the same permissions as a Role, but because they are cluster-scoped, acess will be granted across
+		cluster
+		
+		Manifest: Read Only access to AKS Cluster
+			
+		kind: ClusterRole
+		apiVersion: rbac.authorization.k8s.io/v1
+		metadata:
+		  name: aks-cluster-readonly-role
+		rules:
+		- apiGroups: ["", "extensions", "apps"]
+		  resources: ["*"]
+		  verbs: ["get", "list", "watch"]
+		- apiGroups: ["batch"]
+		  resources:
+		  - jobs
+		  - cronjobs
+		  verbs: ["get", "list", "watch"]
+
+		A Cluster Role Binding is used to tie the Cluster Role and Subject together
+
+		Manifest: 
+
+		kind: ClusterRoleBinding
+		apiVersion: rbac.authorization.k8s.io
+		metadata:
+		  name: aks-cluster-readonly-role
+		roleRef:
+		  apiGroup: rbac.authoraization.k8s.io/v1
+		  kind: ClusterRole
+		  name: aks-cluster-readonly-role
+		subjects:
+		- kind: Group
+		  name: "e808215d-d159-49ba-8bb6-9661ba478842"
+
+		
+
+		

@@ -1,0 +1,69 @@
+Workload Resources:
+
+1. Pod:
+
+	Pod is a collection of containers that can run on a host.
+
+2. PodTemplate:
+
+	PodTemplate describes a template for creating copies of a predefined pod.
+
+3. ReplicationController:
+
+	ReplicationController represents the configuration of a replication controller.
+
+4. ReplicaSet:
+
+	ReplicaSet ensures that a specified number of pod replicas are running at any given time.
+
+5. Deployment:
+
+	Deployment enables declarative updates for Pods and ReplicaSets.
+
+6. StatefulSet:
+
+	StatefulSet represents a set of pods with consistent identities.
+
+7. ControllerRevision:
+
+	ControllerRevision implements an immutable snapshot of state data.
+
+8. DaemonSet:
+
+	DaemonSet represents the configuration of a daemon set.
+
+9. Job:
+
+	Job represents the configuration of a single job.
+
+10. CronJob:
+
+	CronJob represents the configuration of a single cron job.
+
+11. HorizontalPodAutoscaler:
+
+	configuration of a horizontal pod autoscaler.
+	HorizontalPodAutoscaler is the configuration for a horizontal pod autoscaler, 
+	which automatically manages the replica count of any resource implementing the 
+	scale subresource based on the metrics specified.
+
+12. PriorityClass:
+
+	PriorityClass defines mapping from a priority class name to the priority integer value.
+
+13. PodScheduling v1alpha1:
+
+	PodScheduling objects hold information that is needed to schedule a Pod with ResourceClaims 
+	that use "WaitForFirstConsumer" allocation mode.	
+	
+14. ResourceClaim v1alpha1:
+
+	ResourceClaim describes which resources are needed by a resource consumer.
+
+15. ResourceClaimTemplate v1alpha1
+
+	ResourceClaimTemplate is used to produce ResourceClaim objects.
+
+16. ResourceClass v1alpha1
+
+	ResourceClass is used by administrators to influence how resources are allocated.

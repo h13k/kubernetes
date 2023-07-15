@@ -1,0 +1,82 @@
+Azure AKS Autoscaling: Horizontal Pod Autoscaling
+		
+		1. Horizontal Pod Autoscaler: In a very simple note hpa means scaling and reducing the number of Replicas (Pods).		
+		2. HPA automatically scales the number of pods in a deployment, replication controller, or replica set, stateful set
+		   based on that resources CPU utilization.
+		3. This can help our applications scale out to meet as per demand or scale down when resources are not needed, thus freeing
+		   up our worker nodes for other applications
+		4. When we set a target CPU Utilization percentage, the HPA scales our application in or out to try to meet that target.	
+		   HPA needs k8s metric server to verify CPU metrics of a pod.
+		5. We do not need to deploy or install the HPA on our cluster to begin scaling our applications, its out of the box available 
+		   as a default k8s API resource.
+			1. Query for Metrics
+			2. Calculate the Replica's
+			3. Scale the app to desired replicas.
+		6. HPA requires:
+			1. Scaling Metric: CPU Utilization
+			2. Target Value: CPU = 50%
+			3. Min Replicas = 2
+			4. Max Replicas = 10
+		7. Command: kubectl autoscale deployment demo-deployment --cpu-percent=50 --min=1 --max=10
+
+		Manifest Files:
+
+		apiVersion: autoscaling/v1
+		kind: HorizontalPodAutoscaler
+		metadata:
+		  name: hpa-demo=declarative
+		spec:
+		  maxReplicas: 10 #define max replica count
+		  minReplicas: 1 #define min replica count
+		  scaleTargetRef:
+		    apiVersion: apps/v1
+		    kind: Deployment
+		    name: hpa-demo-deployment
+		  targetCPUtilizationPercentage: 20 # target CPU utilization
+	
+		---
+
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: hpa-demo-deployment
+		  labels: 
+		    app: hpa-nginx
+		spec:
+		  replicas: 1
+		  selector: 
+		    matchLabels:
+		      app: hpa-nginx
+		  template: 
+		    metadata:
+		      labels:
+			app: hpa-nginx
+		    spec: 
+		      containers:
+		        - name: hpa-nginx
+		          image: stacksimplify/kubenginx:1.0.0
+			  ports:
+			  - containerPort: 80
+			  resources:
+			    requests:
+			       memory: "128Mi"
+			       cpu: "100m"
+			    limits:
+			      memory: "500Mi"
+			      cpu: "200m"
+		
+		---
+
+		apiVersion: v1
+		kind: Service
+		metadata:
+		  name: hpa-demo-service-nginx
+		  labels:
+		    app: hpa-nginx
+		spec:
+		  type: LoadBalancer
+		  selector:
+		    app: hpa-nginx
+		  ports:
+		  - port: 80
+		    targetPort: 80

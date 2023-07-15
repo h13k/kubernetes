@@ -1,0 +1,111 @@
+Kubernetes Various distributions:
+
+	Amazon		EKS
+	Azure		AKS
+	GCP 		GKS
+	VMware		Tanzo
+	RedHat		Openshift
+	Docker		DKE - Docker Kubernetes Engine
+			Rancher
+
+Local k8s cluster distributions:
+
+	minikube, k3s, kind, microk8s
+
+Important Points:
+
+	1. Init or side-car continers in a pod will gives support to main application container.
+	2. kube-proxy will generates the "clusterip" address.
+	3. "Kops" will creates and manages the k8s cluster.
+	4. "Kubectl" will creates k8s objects or workloads in k8s cluster.
+
+How devops engineer manage 100's of clusters in production?
+
+	Kops - K8s operations - Life cycle of k8s will be managed by "Kops", It will be used most widely in production.
+		(Installations,Upgrading,modifying,deleting the clusters).
+	Various other tools: kubeadm(4 years back most wisely used), kubesqash
+	
+kubectl get nodes
+kubectl get nodes -o wide 
+kubectl get pods --all-namespaces
+kubectl get namespaces
+kubectl get all --all-namespaces
+kubectl get svc
+kubectl get deployments
+kubectl get pods
+kubectl logs -f podname
+kubectl describe pod podname
+kubectl get nodes -o wide - display the List of nodes in our cluster. 
+kubectl get pods -o wide - display the List of pods in our cluster. 
+kubectl run ngnixpod --image nginx - It creates a pod .
+kubectl describe pod nginxpod.
+kubectl apply -f .yml - which deploys the declarative files
+xzzx0kubectl delete pod podname.
+kubectl logs podname.
+kubectl exec -it podname -- /bin/sh (or) --bash - which is used to login into pod.
+kubectl get pod podname -o yaml - 
+kubectl run nginx-pod --image nginx --dry-run=client -o yaml > 10.yml
+kubectl run nginx-manual --image nginx --dry-run=client -o yaml > manualschedule.yaml
+sudo vi /etc/kubernetes/manifests/ - path 
+kubectl get pods -n kube-system - default static kubernetes files created over kube-administrator.
+
+ls /etc/kubernetes/manifests/
+      			1. etcd-master				etcd.yaml
+			2. kube-apiserver-master		kube-apiserver.yaml
+			3. kube-controller-manager-master	kube-controller-manager.yaml
+			4. kube-scheduler-master		kube-scheduler.yaml
+
+Deployment:
+
+1. kubectl create deployment my-first-deployment --image=stacksimplify/kubenginx:1.0.0 - deployment creation
+2. kubectl scale --replicas=10 deployment/my-first-deployment - scale-up & scale-down of deployment
+3. kubectl expose deployment my-first-deployment --type=LoadBalancer --port=80 --target-port=80 --name=my-first-deployment-service -  expose deployment as a service
+4. kubectl set image deployment/my-first-deployment kubenginx=stacksimplify/kubenginx:2.0.0 --record=true - Updating deployment version
+5. kubectl edit deployment/my-first-deployment --record=true - Updating deployment version (method-2)
+6. kubectl rollout status deployment/my-first-deployment - check the rolling update status of deployment
+7. kubectl rollout history deployment/my-first-deployment - history of rolling update of a deployment
+8. kubectl rollout history deployment/my-first-deployment --revision=1 - histroy of rolling update of a deployment in terms of images and annotations
+9. kubectl rollout undo deployment/my-first-deployment - which roll back to previous version of application 
+10. kubectl rollout undo deployment/my-first-deployment --to-revision=1 - which roll back to specific version of an application 
+11. kubectl rollout restart deployment/my-first-deployment 
+	Rolling restarts will kill the existing pods in replicaset and re-create new pods in a rolling fashion
+12. kubectl rollout pause deployment/my-first-deployment - holding changes into deployment
+	kubectl set resources deployment/my-first-deployment -c=kubenginx --limits=cpu=20m,memory=30Mi
+		(resources added to current deployment by pausing deployment
+		kubectl set image deployment/my-first-deployment kubenginx=stacksimplify/kubenginx:4.0.0 --record=true)
+13. kubectl rollout resume deployment/my-first-deployment  	
+
+	
+3. Minikube: minikube is local kubernetes, focusing on making it easy to learn and develop for kubernetes
+          commands:     
+			1. minikube start -creates mini cube k8s cluster.
+			2. minikube start --driver=virtual box
+			3. minikube start --no-vtx-check
+			4. minikube start --driver=virtualbox --no-vtx-check
+			5. minikube ip
+			6. minikube ssh - If we set --driver=docker
+			7. ssh docker@ipaddress will not work 
+				default user name & passwd for minikube:
+/				user name: docker; passwd: tcuser
+			8. docker ps - list of containers
+			9. kubectl cluster-info - which gives cluster information
+			10. kubectl get nodes - node information
+			11. kubectl get pods - pod information
+			12. kubectl get namespaces - 
+  				Namespaces are used in kubernetes in order to group different
+				resources and configuration objects.
+			13. kubectl get pods --namespaces=namespacename
+				pods are organized in different namespaces
+			14. kubectl run nginx --image=nginx 
+				is name of the docker image which is available in docker hub
+				which will be pulled automatically and 
+				new container will be created based on this image and this container		
+				will be running inside of the kubernetes pod
+			15. kubectl describe pod pod name
+			16. docker ps | grep nginx
+			17. docker exec -it container id
+				hostname
+				hostname -i - ip address
+			18. kubectl delete pod pod name - which deletes the pod.
+			19. alias: using alias instead of using big names during same name manytimes
+				we can create short name by specifing long name into short name like a varibale. 

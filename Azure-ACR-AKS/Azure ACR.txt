@@ -1,0 +1,101 @@
+1. Azure Container Registry:
+
+	1. Its a managed, private Docker registry service.
+	2. We can create and maintain Azure container registries to store and manage
+	   our private docker container images
+	3. With ACR, we can simplify our container lifecycle management.
+	4. Geo-replication to efficiently manage a single registry across multiple regions.
+	5. Automated container building and patching including base image updates
+	   and task scheduling.
+	6. "Integrated Security" with Azure Active Directory (Azure AD) authentication, role-based 
+		access control, Docker Content Trust and virtual network integration.
+
+2. We can integrate ACR in 2 ways:
+
+	1. Direct Integration from Azure ACR to AKS
+	2. Pull Docker Images from ACR using Service Principle and Run on Azure AKS Nodepools - (Worker-Nodes-VMSS).
+	   Pull Docker Images from ACR using Service Principle and Run on Azure Virtual Nodes - (Azure ACI & Virtual kubelet).
+
+3. ACR - Pricing Tiers:
+
+	1. Basic,Standard - ACR can be used as public container registry.
+			    No secured customer managed key for Encryption.
+			    storage: 10 & 100GB(Max Up to 20TB).
+			    No Geo replication & content trust
+			    Download speed: 30 & 60 MBps & Upload speed: 10 & 20 MBps.
+	2. Premium - ACR can be used as private container registry.
+		     Provides secured customer managed key for Encryption.
+			storage: 500GB(Max Up to 20TB).
+			supports Geo replication & content trust.
+			Download speed: 100 MBps & Upload speed: 50 MBps.
+
+4. Direct Integration from Azure ACR to AKS:
+	Commands: build and test docker image locally
+
+	docker build -t 
+	docker run --name kube-nginx-acr --rm -p 80:80 -d kube-nginx-acr:v1
+	
+
+5. Enable Docker login for ACR Repository
+
+	Go to Services --> Container Registries --> acrforaksdemo2
+	Go to Access Keys
+	Click on Enable Admin User
+	Make a note of Username & Password
+
+6. Push local docker image to ACR:
+
+	Export ACR_REGISTRY, ACR_NAMESPACE, ACR_IMAGE_NAME, ACR_IMAGE_TAG
+	docker login
+	Tag: $ACR_REGISTRY/$ACR_NAMESPACE/$ACR_IMAGE_NAME/$ACR_IMAGE_TAG
+		push docker images
+
+7. Configure ACR integration for existing AKS clusters:
+
+	#set ACR NAME: export ACR_NAME=acrforaksdemo2
+			echo $ACR_NAME
+
+	#Template to direct integration of ACR to AKS clusters:
+		az aks update -n aksdemo2 -g aks-rg2 --attach-acr $ACR_NAME
+
+	Deployment Manifest File:
+	
+	apiVersion: v1
+	kind: deployment
+	metadata:
+	  name: acrdemo-localdocker-deployment
+	  labels:
+	    app: acrdemo-localdocker
+	spec:
+	  replicas: 1
+	  selector:
+	    matchlabels:
+	      app: acrdemo-localdocker
+	template:
+	  metadata:
+	    labels:
+	      app: acrdemo-localdocker
+	  spec:
+	    containers:
+	      - name: acrdemo-localdocker
+		image: acrforaksdemo2.azureacr.io/app1/kube-nginx-acr:v1 
+		imagePullPolicy: Always
+		ports:
+		  - containerPort: 80
+
+	---
+
+	apiVersion: v1
+	kind: service
+	metadata:
+	  name: acrdemo-localdocker-service
+	  labels:
+	    app: acrdemo-localdocker
+	spec:
+	  type: LoadBalancer
+	  selector:
+	    app: acrdemo-localdocker
+	  ports:
+	    - port: 80
+	      targetPort: 80
+	  

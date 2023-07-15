@@ -1,0 +1,158 @@
+1. Ingress controller: 
+
+	1. In simple terms, native kubernetes services cannot do all the reverse proxy, so there comes ingress controller
+	2. In traditional k8s multiple microservice applications should expose externally through different public ip's.
+	   Also Azure standard loadbalancer doesnt have ssl termination where it is a layer-4 load-balancer it will only route tcp traffic but not http.  
+	3. Where as ingress will expose multiple microservice applications under single domain name. 
+	4. Ingress is a k8s resource that lets us configure an HTTP load balancer for applications running on k8s, with advanced capabilities at HTTP layer.
+	5. In kuberenetes, Ingress is an API object that provides external access to services within a cluster.
+	6. It acts as a layer-7 (application layer) load balancer, allowing external traffic to be routed to different services based on 
+		HTTP/HTTPS routes and rules.
+
+2. Core Features of Ingress Controller: 
+
+	1. Context Path based routing: Prefix in terms of k8s ingress service manifestation official documentation 
+	2. Host based Routing.
+	3. TLS/SSL Termination.
+
+3. Ingress-Terminology:
+
+	1. Ingress Controller: Its an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources.
+			       The Load balancer can be a s/w load balancer running in the cluster or a hardware or cloud load balancer running externally.
+			       In the case of NGINX, the ingress controller is deployed in a pod along with the load balancer.
+
+	2. Ingress Resource or Service or manifest:
+			We can define routing rules based on URI or Hostname in Ingress Resource Manifest.
+			We can even define SSL/TLS related information in Ingress Resource Manifest.
+
+4. Various Cloud Ingress services: Azure Application Gateway Ingress Controller - Azure AGIC
+				   Application Load Balancer for EKS - AWS
+
+5. Ingress Basic Introduction:
+
+	1. Should define our own static public IP for our Ingress Controller and while installating ingress controller itself associate that respective public IP
+	   for ingress controller.
+		Commands: 
+		az aks show --resource-group aks-rg1 --name aksdemo1 --query nodeResourceGroup -o tsv
+		az network public-ip create --resource-group MC_aks-rg1_aksdemo1_centralus \
+					    --name myAKSPublicIPForIngress \
+					    --sku standard \
+					    --allocation-method static \
+					    --query publicIP.ipaddress \
+					    -o tsv
+	2. As part of ingress controller, helm chart deployment It eventually creates the ingress controller pod and ingress controller related service.
+		1. install helm: choco install kubernetes-helm
+		2. create a namespace for our ingress  resources: kubectl create namespace ingress-basic.
+		3. Add the official stable repository:
+			helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+			helm repo add stable https://kuberenetes-charts.storage.googleapis.com/
+			helm repo update
+		4. customizing hart before installing:
+			helm show values ingress-nginx/ingress-nginx
+		5. Use helm to deploy an NGINX ingress controller
+			helm install ingress-nginx ingress-nginx/ingress-nginx \
+	3. deploy sample application expose it through clusterip service internally to AKS cluster.
+	4. deploy ingress service or manifest in which it creates a root context means multiple microservices will derive from that root context which is mapped to publicip.
+	5. Whenever end user access to public ip, The request will route to ingress controller and then route to ingress service and then decides based on root context path 
+	   where the pod should go.
+	6. Requirements: nginx app deployment manifest file
+			 nginx app deployment related service manifest file  
+			 ingress manifest file
+	7. Note: Ingress should create in an isolated namespace, but condition is ingress resource or manifest and its pointed application should be in a same namespace.
+		 whatever ingress related stuff should be in an isolated namespace.
+	
+	
+
+		Ingress Basic Manifest File:
+
+	apiVersion: networking.k8s.io/v1
+	kind: Ingress
+	metadata: 
+	  name: nginxapp1-ingress-service
+	  annotations:
+	    kubernetes.io/ingress.class: "nginx"
+	spec:
+	  rules:
+	  - http:
+	      paths:
+	      - path: /
+		backend:
+		  serviceName: app1-nginx-clusterip-service
+		  servicePort: 80    
+
+
+	apiVersion: networking.k8s.io/v1
+	kind: Ingress
+	metadata: 
+	  name: nginxapp1-ingress-service
+	  annotations:
+	    kubernetes.io/ingress.class: "nginx"
+	spec:
+	  rules:
+	  - http:
+	      paths:
+	      - path: /
+		pathType: Prefix
+		backend:
+		  service:
+		    Name: app1-nginx-clusterip-service
+		    Port:
+		      number: 80
+
+6. Ingress Path types:
+
+	Each path in an ingress to have a corresponding path type. 
+	
+	1. ImplementationSpecific: with this path type, matching is up to the ingressClass.
+	   implementations can treat this as a seperate pathtype or treat it identically to Prefix or Exact path types
+	2. Exact: Matches the URL path exactly and with case sensitivity.
+	3. Prefix: Matches based on URL path prefix split by / . Matching is case sensitive and done on a path element by element basis.
+		   A path element refers to the list of labels in the path split by / seperator.
+		   A request is a match for path p if every p is a element-wise prefix of p of the request path. 
+			prefix supports: both /, / /- trailing slash
+
+7. Commands: 
+	kubectl apply -R -f folder name - executes k8s manifest files in both folder and subfolder level.
+
+how an ingress controller can be configured to kubernetes clusters?
+
+An ingress controller is used to expose Kubernetes services to the outside world. 
+To configure an ingress controller in a Kubernetes cluster, you can follow these general steps:
+
+	1. Choose an ingress controller: There are several ingress controllers available for Kubernetes, including Nginx, Traefik, and Istio. 
+					Choose the one that best suits your needs.
+
+	2. Deploy the ingress controller: Deploy the chosen ingress controller in your Kubernetes cluster. 
+				       This typically involves creating a Kubernetes deployment and service for the ingress controller.
+
+	3. Define ingress resources: Define Kubernetes ingress resources that specify how traffic should be routed to your services. 
+				  An ingress resource consists of rules that match incoming requests to a specific path or host and a backend that specifies where the traffic should be forwarded.
+
+	4. Configure DNS: Configure DNS so that the hostnames specified in your ingress resources resolve to the IP address of the ingress controller service.
+
+	5. Test the ingress controller: Test the ingress controller to ensure that traffic is being routed correctly to your services.
+
+	An ingress controller in Kubernetes is responsible for routing external traffic into the cluster to the appropriate services. 
+	To configure an ingress controller, you can follow these general steps:
+
+	1. Choose an ingress controller: There are various ingress controllers available for Kubernetes such as Nginx, Traefik, and Istio.
+					 You can choose one that suits your needs and requirements.
+
+	2. Deploy the ingress controller: You can deploy the ingress controller by creating a Kubernetes deployment and a service. 
+					  The deployment ensures that the ingress controller is always running and the service exposes it to the rest of the cluster.
+
+	3. Configure ingress resources: Once the ingress controller is deployed, you need to define the ingress resources to route external traffic to your services. 
+					You can create an ingress resource by defining the rules and paths for incoming requests and specifying which service to route traffic to.
+
+	4. Configure DNS: You need to configure DNS to point to the IP address of the ingress controller service. 
+			  This allows external traffic to reach the ingress controller.
+
+	5. Verify the setup: After configuring the ingress controller, you should test it by sending traffic to the specified DNS name and 
+			     verifying that it reaches the correct service.
+
+	These are the general steps to configure an ingress controller in Kubernetes. 
+	The exact process may vary depending on the ingress controller you choose and the specifics of your deployment.
+	It's important to follow the documentation provided by the ingress controller and Kubernetes to ensure a successful setup.
+
+	These steps can vary depending on the ingress controller you choose and the specific requirements of your application. 
+	You can find more detailed instructions for configuring specific ingress controllers in their documentation.

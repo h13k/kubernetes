@@ -1,0 +1,63 @@
+Azure AKS - Azure Devops - Build & Push Docker Image to ACR, Publish Artifacts - Starter Pipeline:
+
+Environments: Dev, Qa, Staging, Production 
+	
+	- bash: echo Contents in System Default Working Directory: ls -R $(System.DefaultWorkingDirectory)
+	- bash: echo Before copying in Build Artifact Directory: ls -R $(Build.ArtifactStagingDirectory)
+	#Task-2: Copy files (copy files from a source to target folder)
+	#Source Directory: $(System.DefaultWorkingDirectory)/kube-manifests
+	#Target Directory: $(Build.ArtifactStagingDirectory)
+
+	- task: CopyFiles@2
+	  inputs:
+	    SourceFolder: '$(System.DefaultWorkingDirectory)/kube-manifests'
+	    Contents: '**'
+	    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+	    OverWrite: true
+	#Task-3: Publish build Arifacts (publish build to Azure Pipeline)
+
+	- task: PublishBuildArtifacts@1
+	  inputs:
+	    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+	    ArtifactName: 'Kube-manifests'
+	    publishLocation: 'Container' 
+
+
+	 Build & Push Docker Image to ACR, Publish Artifacts through Azure Pipelines:
+
+	Stages: Jobs will run on agents under stages
+		
+		steps: tasks will run under jobs
+		       step-1: script: echo Hello, world!
+		       step-2: Task-1: Docker Build & Push to ACR
+		       step-3: Task-2: Copy Files to Build Artifact Directory.
+		       step-4: Task-3: Publish Artifacts to Azure Pipleines.
+
+	Stages stage-1 Jobs
+		       Job-1 Steps Step-1: Script
+				   Step-2: Task
+
+		       Job-2 Steps Step-1: Task
+				   Step-2: Task
+
+		stage-2 Jobs
+			Job-1 Steps Step-1: Script
+				    Step-2: Script
+   	- stage: stage-2
+	  Jobs:
+	  - Job: Job-1
+	    steps:
+	    - task: some task step-1
+	    - task: some task step-2
+	  - Job: Job-2
+	    steps:
+	    - script: echo Step-1
+	    - script: echo Step-2
+
+	Azure Pipelines - Starter Pipeline
+		
+	Goal: Create a Pipeline that will build docker images, push them to Azure Container Registry and Public Kubernetes Manifests to Azure Pipelines.
+	Part-1 Semi Customized							Part-2 Fully Customized using Starter Pipeline
+	Task-1 Use Pre-defined Docker Build and Push Pipeline.			Task-1: Start using Starter pipeline and use Docker Build or push Docker Images Task
+	Task-2 Customize Pipeline to Use Copy Files Task			Task-2: Customize Pipeline Use Copy Files Task
+	Task-3 Customize Pipeline to use Publish Build Arifacts Task		Task-3: Customize Pipeline to Use Publish Build Artifacts Task

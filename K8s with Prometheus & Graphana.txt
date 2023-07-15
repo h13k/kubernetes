@@ -1,0 +1,328 @@
+1. Why Prometheus is important for Container & Microservices infrastructure?
+
+	Graphana: visualize dashboards Port 3000
+	Prometheus: Monitoring tool port 9090
+	Prometheus Node Exporter 9100
+
+	1. Modren devops becomes more and more complex to handle manually which needs more automations.
+	2. Typically there will be having multiple servers that run containerized applications
+	   and hundereds of different process running on that infrastructure and things are interconnected.
+	3. So Maintaining such setup to run smoothly and managing an applications that are not having downtime is a big challange.
+		Imagine we are having such a complex infrastructure with lots of servers which are distributed over
+		many locations and we have no monitoring tool inside of what is happening on hardware and application level.
+
+			1. Errors
+			2. Response Latency
+			3. Hardware down
+			4. Overloaded 
+			5. Out of resources
+
+	4. In such complex infrstructure there may be more things go wrong like
+		
+		when we have tons of services and applications are deployed on servers
+		If one server is crashed and cause failure of other services
+		There may be a situation where suddenly application becomes unavailable to users
+		must quickly identify what exactly out of these 100 different things went wrong
+		and that could be difficult and time consuming when debugging system manually.
+
+		For Example: There is a specific server drained out of memory and kicked of running
+			     container that was responsible for providing database sync between 2
+			     database parts in a kubernetes cluster.
+			     that intern calls those 2 database parts to fail that database used
+			     by an authentication service that also stops working because database 
+			     become un-available.
+			     and then application that dependent on that authentication service 
+			     could not able to authenticate users in the application UI any more.
+
+		If monitoring tool is fixed inside the cluster infra we can able to figure out things
+		easily like wheather
+				Backend running correctly or not?
+				Any Exception?
+				Auth-service running or not?
+				why did Auth-service crash?
+
+			Uses:
+				1. Constantly monitors whether all the services are running or not. 
+				2. Alert the maintainers if one service is crashes.
+				3. Identify the problems before the event occurs and alerts the system
+				   administrators responsible for an infrastructure to prevent the issue.
+				4. Regularly checks the status of memory usage on each server and when 
+				   If it reaches max limit and keeps memory utilization increasing
+				   It notifies administrator about the risk that the memory on that server
+				   might soon runout
+				5. Suddenly stops logs for our application because elastic search doesnt except any new logs
+				   because server drained out of disk space or elastic search reaches the storage limit
+				   that was allocated for it 
+					Monitoring tool in this case will checks continously the storage space and compare with
+					elastic search consumption of space of storage and it will see the risk and
+					notify the maintainers that there is possible storage issue.
+						Trigger alerts before it is at during 50% consumption.
+				6. Application become too slow because one service breaks down and starts sending 100 of error messages
+				   in a loop across the network that creates high network traffic and slows down other services too.
+					Monitor network loads - Tool detects such spikes in network loads helps us which service is 
+						                responsible for causing it and it can give us time to fix the issue.
+
+2. Prometheus Architecture:
+
+	1. Prometheus Server: Main component, It does the actual monitoring work.
+		It consists of 3 Parts:
+			1. Time-series Database:
+				Storage: Stores metric data 
+				like CPU Usage, No of Exceptions of an application.
+			2. Data Retrieval Worker: 
+				Responsible for getting or pulls metrics data from
+				applications, services, servers and other target resources
+				and storing them and pushing them into database.
+			3. Accepts PromQL Queries:
+				 It has a webserver or server api that accepts queries for storing data into database.
+				 It is used to display the data either through promethus web UI or 
+				 grafana dashboards(Data Visualization tool).
+
+3. What does Prometheus monitor?
+
+	1. Linux/windows server
+	2. Apache Server
+	3. Single or multiple applications
+	4. Service like Database
+
+4. Which units are monitored of those targets?
+
+	CPU Status, Memory/Disk space usage, Requests count, Request Duration
+	Exceptions Count.
+
+5. Targets and Metrics:
+
+	Metrics are saved in database components
+	(CPU Status, Memory/Disk space usage, Requests count, Request Duration
+	Exceptions Count.)
+	- Format: Human-readable text-based 
+	- Metrics entries: Data will be in TYPE and HELP attributes.
+		1. HELP: description of what the metrics is
+		2. TYPE: 3 metrics types
+
+			1. Counter: No of exceptions that an applications had
+				    No of requests it has received.
+
+			2. Gauge: what is the current value of CPU usage now
+				  what is the current capacity of disk space now
+				  what is the no of concurrent requests that given moment.
+
+			3. Histogram: its for tracking that how long something took 
+					or how big size of request 
+
+6. How does Prometheus collect those metrics from targets? - Target Endpoints and Exporters
+
+	1. Data Retrieval Worker pulls target metrics(linux/windows, External Service) over HTTP 
+		Pulls from HTTP endpoints
+		hostaddrss/metrics
+		must be in correct format that prometheus understand.	
+	2. Some endpoints will Expose /metrics by default.
+	3. Many endpoints or services donot expose /metrics.
+ 		Those endpoints should need an extra component called "Exporter" for expose the /metrics
+		Exporter: Its a script or service that fetches metrics from your target 
+			  converts that metrics into format in which prometheus understands
+			  and exposes this converted data at its own /metrics endpoints where prometheus can
+			  scrap them through Data retrievel worker component.
+	4. Prometheus has a list of exporters for different services:
+			 MySQL, elastic search, linux server, build tools, cloud platforms.
+
+	5. For Example for Monitoring Linux Server:
+			1. Download a node exporter thrid file from prometheus repository.
+			2. untar and execute it that exporter file.
+			3. It will starts Converts metrics of the server.
+			4. Making them scrapable by Exposing into its own /metrics endpoint.
+			5. Configure prometheus to scrape this endpoint.
+	
+	6. Exporters are also available as a docker images:
+
+		1. For Example if we have to monitor MySQL db Container in kuberenetes cluster
+		2. you can deploy a sidecar container of Mysql exporter that will run inside
+		   pod with mysql container connect to it and starts converting mysql metrics
+		   for prometheus and making them available at its own /metrics endpoint.
+		3. Once mysql exporter endpoint to prometheus configuration
+		   Prometheus will start collecting those metrics and saving them in its database.
+
+7. Monitoring Your Own Applications?
+
+	1. How many requests?
+  	2. How many exceptions?
+	3. How many server resources are used?
+		
+		Using prometheus client libraries for different languages like node js, java
+		Using these libraries you can expose /metrics scrapping endpoints in your applications.
+
+8. Advantages of prometheus?
+
+	1. Pull Mechanism: Unique advantage of prometheus 
+		pulls the /metrics data from various endpoints through Data Retrivel worker component.
+		Its an important advantage and characteristic of prometheus.
+
+		WHY?
+
+	(Note: Most of the monitoring systems like Amazon cloud watch - Push system of other monitoring systems
+	Applications/Servers push to a centralized collection platform)
+
+		As there are many microservices are running in infrastructure, each microservice pushes the metrics
+		data into centralized monitoring tool it creates high traffic load with in your infrastructure.
+		and monitoring can become our bottleneck its great but needs to pay the price of overloading your 
+		infrastructure with constant push requests from all the services and thus flooding the network.
+		Plus you also have to install deamons on each of these targets to push the metrics 
+		into monitoring server.
+		But for push gateway there are limited no of cases where targets that needs to be
+		monitored runs only for short time.
+
+	While prometheus just requires a scrapping endpoint and this way metrics can also be pulled by multiple
+	prometheus instances
+	Using pull prometheus can easily detect whether service is up/running
+		(Endpoint isnt available or unresponsive)
+		better detection/insight if service up/running 
+		for short lived job prometheus offers pushgateway component.
+
+9. Configuring Prometheus:
+
+	How does Prometheus know what to scrape and when? - 
+
+		prometheus.yml configuration file consits of an information what to scrape and when
+			which targets should prometheus should scrape? and
+			at what interval?
+		Using "service discovery" mechanism to discover target endpoints.
+
+	How often Prometheus will scrape its targets?
+
+		when prometheus was downloaded there is simple config file with some default values in it
+			
+			values: 
+				global: we can override this for individual targets
+				   scrap_interval: 15s
+				   evaluation_interval: 15s
+				rule_files:
+				   # - "first.rules"
+				   # - "second.rules"
+				scrape_configs:
+				   - job_name: prometheus
+				     static_configs:
+					- targets: ['localhost:9090']
+				   - job_name: node_exporter
+			             scrap_interval: 1m
+				     scrap_timeout: 1m
+				     static_configs:
+					- targets: ['localhost:9100']
+
+	(Note: Default values for each job: 
+			matrics_path: "/metrics"
+			scheme: "http" ).		
+	
+	(Note: "Rule files" block specifies the location of any rules we want prometheus server to load
+		rules for aggregating metric values or creating alerts when some condition is met.
+	scrape_configs: controls what resources prometheus should monitor, Since prometheus has its own 
+	/metrics endpoint to expose its data it can monitors on its health).
+
+10. How does Prometheus trigger the alerts?
+    Who recieves the alerts?
+
+	Prometheus has a component called "Alert Manager" that is responsible for firing alerts via different
+	channel it could be email or slack or some other client notification.
+	Prometheus server will reads the alert rules of a config file
+		if a condition on that rule is matched alert gets fired through that configured channel. 
+
+11. Where does Prometheus store the data? - Prometheus Data Storage - prometheus can collects and then aggregates data
+    How can other systems can access prometheus data?
+
+	Prometheus stores metrics data on disk it includes local on disk time-series database and also integrates
+	remote storage systems - data will be stored in custom Time-Series Format because of that we can write 
+	prometheus data directly into relational database
+
+12. Characterstics:
+
+	1. Reliable
+	2. Stand-alone and self-containing
+	3. Works, even if other parts of infrastructure broken.
+	4. no extensive set-up needed.
+	5. less complex
+
+13. Disadvantages:
+
+	1. difficult to scale 
+	2. limits monitoring 
+		
+		Workarounds: increase prometheus server capacity to store more amounts of metrics data.
+				limit number of metrics.
+
+14. Prometheus with Docker and kubernetes:
+
+	1. Fully compatible
+	2. Prometheus components available as Docker images
+	3. It can easily be deplopyed in Container Environments like kubernetes.
+	4. Monitoring of K8s Cluster Node Resources out-of-the box.
+
+15. Setup Prometheus Monitoring on Kubernetes using Helm and Prometheus Operator:
+
+	1. Creating all configuration YAML files and execute them in righr order.
+	2. Using a operator - Manager of all promotheus individual components
+			      Manages the combination of all prometheus stack components as a single unit
+		statefull sets and deployments manages its pod replicas
+		Find Prometheus operator, Deploy in K8S cluster
+	3. Using Helm chart to deploy operator
+		Helm: Initial setup
+		Operator: manage setup
+
+			helm install prometheus stable/prometheus-operator
+			kubectl get pod
+			kubectl get all - (Pods, services)
+
+				1. Helm Creates 2-Statefull sets: 
+				   Commands: kubectl get statefulset
+					     kubectl describe statefulset name > yaml file
+					     kubectl describe statefulset name > yaml file
+					1. Prometheus Server
+				 (operator manages the prometheus server 3 components
+						1. Storage
+						2. promQLqueries - HTTP server
+						3. Retrievel)
+					2. Alert Manager
+				(Operator manages the alert source and target components)
+				
+				2. Helm Creates 3 Deployments: 
+				    Commands: kubectl get deployment
+					     kubectl describe deployment name > yaml file
+					     kubectl describe deployment name > yaml file
+					     kubectl describe deployment name > yaml file
+					1. Prometheus Operator: Creates Prometheus and AlertManager statefull set.
+					2. Grafana 
+					3. Kube State metrics:
+						Own Helm chart
+						dependency on this helm chart
+						scrapes K8s components
+								
+				3. Helm creates 3 Replicasets: created by deployments
+					1. Prometheus Operator Replicaset
+					2. Grafana Replicaset 
+					3. Kube State metrics Replicaset
+				
+				4. Helm creates 1 Deamonset: Node exporter Deamonset
+					It is a component which will run on every single workernode of kubernetes.
+					Connects to Prometheus Server
+					translates WorkerNode metrics and save metrics into prometheus default /metrics path.
+
+				5. Pods will delivered from deployments and statefulsets
+				6. Services each component has its own services.
+
+		Summary: Monitoring stack
+			 Configuring of your K8s cluster
+			 Worker nodes monitored
+			 K8s components monitored
+		
+		kubectl get configmap - Configuration for different parts
+					managed by operator
+					how to connect to default metrics
+
+		kubectl get secret - for grafana: 
+				     for Prometheus:
+				     for Operators:
+		
+		kubectl get crd: CRDS - Custom resource definition
+				 extension of kubernetes API
+
+
+
+

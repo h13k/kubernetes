@@ -1,0 +1,19 @@
+StatefulSet for stateful applications:
+
+	stateful applications: 
+		All Databases - MySQL, Elasticsearch, MongoDB
+		Any application that stores data to keep track of its state.
+		saving the information in some storage.
+		stateful applications will be deployed using statefulset
+	stateless applications:
+		stateless applicatios connect to the stateful application to forward those requests.
+		Doesnt depends on previous data, It can handle it based on the payload in the request itself.
+		stateless applications will be deployed using deployment
+
+	Both stateful and stateless applications deployed in different ways using 
+	different components in kubernetes.
+	Both manage Pods based on identical container specification.
+	configure storage with both of the equally.
+	Bothe manage the replication of PODS and also configuration of data persistance in the same way
+		
+

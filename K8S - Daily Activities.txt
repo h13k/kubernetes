@@ -1,0 +1,282 @@
+1. Container orchestration is used to automate the following tasks at scale:
+✓ Configuring and scheduling of containers
+✓ Provisioning and deployment of containers
+✓ Redundancy and availability of containers
+✓ Scaling up or removing containers to spread application load evenly across host 
+infrastructure
+✓ Movement of containers from one host to another if there is a shortage of 
+resources in a host, or if a host dies
+✓ Allocation of resources between containers
+✓ External exposure of services running in a container with the outside world
+✓ Load balancing of service discovery between containers
+✓ Health monitoring of containers and hosts
+
+2. Swarm vs Kubernetes:
+
+Both Kubernetes and Docker Swarm are important tools that are used to deploy containers 
+inside a cluster but there are subtle differences between the both:
+
+	Features	 						Kubernetes					 Docker Swarm
+
+1. Installation & Cluster Configuration 	Installation is complicated; but once                            Installation is very simple; but cluster 
+					        setup, the cluster is very strong                                is not very strong
+
+2. GUI 						GUI is the Kubernetes Dashboard 				 There is no GUI
+
+3. Scalability 					Highly scalable & scales fast 					 Highly scalable & scales 5x faster 
+														 than Kubernetes
+
+4. Auto-Scaling 				Kubernetes can do auto-scaling 					 Docker Swarm cannot do autoscaling
+
+5. Rolling Updates & Rollbacks 			Can deploy Rolling updates & does 				 Can deploy Rolling updates, but not 
+						automatic Rollbacks 						 automatic Rollbacks
+
+6. Data Volumes 				Can share storage volumes only with 				 Can share storage volumes with any 
+						other containers in same Pod 					 other container
+
+7. Logging & Monitoring 			In-built tools for logging & monitoring				 3rd party tools like ELK should be 
+														 used for logging & monitoring
+3. Kubernetes: 
+
+• Kubernetes also known as K8s, is an open-source Container Management tool
+• It provides a container runtime, container orchestration, container-centric 
+infrastructure orchestration, self-healing mechanisms, service discovery, load balancing 
+and container (de)scaling. 
+• Initially developed by Google, for managing containerized applications in a clustered 
+environment but later donated to CNCF
+• Written in Golang
+• It is a platform designed to completely manage the life cycle of containerized 
+applications and services using methods that provide predictability, scalability, and high 
+availability.
+
+4. Kubernetes Master:
+
+• Master is responsible for managing the complete 
+cluster.
+• You can access master node via the CLI, GUI, or API
+• The master watches over the nodes in the cluster and 
+is responsible for the actual orchestration of 
+containers on the worker nodes
+• For achieving fault tolerance, there can be more than 
+one master node in the cluster. 
+• It is the access point from which administrators and 
+other users interact with the cluster to manage the 
+scheduling and deployment of containers. 
+• It has four components: ETCD, Scheduler, Controller
+and API Server
+
+
+What is K3s?
+• K3s is a fully compliant Kubernetes distribution with the following enhancements:
+✓ Packaged as a single binary
+✓ <100MB memory footprint
+✓ Supports ARM and x86 architectures
+✓ Lightweight storage backend based on sqlite3 as the default storage mechanism to replace 
+heavier ETCD server
+✓ Docker is replaced in favour of containerd runtime
+✓ Inbuilt Ingress controller (Traefik)
+
+DaemonSet:
+
+A DaemonSet ensures that all (or some) Nodes run a copy of a Pod. As nodes are added to the cluster,
+Pods are added to them. As nodes are removed from the cluster, those Pods are garbage collected. 
+Deleting a DaemonSet will clean up the Pods it created.
+
+Some typical uses of a DaemonSet are:
+
+running a cluster storage daemon on every node
+running a logs collection daemon on every node
+running a node monitoring daemon on every node
+
+Traefik: Ingress controller with Azure K8s service -  Service.Type=NodePort (or) Service.Type=LoadBalancer
+
+Microservices can be exposed inside and outside of Kubernetes using the Kubernetes Service resource. So far, so good. 
+But as already said, if we want to expose them outside the cluster, using the Service resource with the type LoadBalancer, 
+we end up having different IPs for each microservice. 
+This is not want we want, instead, we want to have them exposed under one and the host using different paths.
+
+This is where the Kubernetes Ingress resource comes in handy. 
+Think of an Ingress like a layer on top of Kubernetes Services. 
+It is the single point of entrance for traffic hitting our microservices,
+which routes traffic to different Kubernetes Services based on specified rules.
+
+The concept of Kubernetes Ingress resource is like an abstraction.
+In order to make use of a Kubernetes Ingress, you have to install a specific Ingress Controller. 
+There are plenty of different Implementations of the Kubernetes Ingress Abstraction out there. 
+NGINX and Traefik Ingress are two of them which are very popular in the Kubernetes and Open Source Community, just to name some.
+And then of course we have Cloud Providers, where you can use resources like Load Balancers and Gateways as a Kubernetes Ingress.
+Anyways, in this article, we will focus on the Traefik Ingress.
+
+Create a new Virtual Network:
+
+When using the Traefik Ingress, whenever you want to expose a microservice, a new route is created inside of Traefik that points to the specific microservice. 
+In order for that connection to work, both Traefik and Kubernetes have to be in the same Azure Vnet.
+Otherwise, the connection cannot be established and you end up having unhealthy connections on the Traefik side.
+So first we create a new Vnet including a Subnet. Additionally, we create a public IP for Traefik.
+
+(Link: https://medium.com/geekculture/traefik-ingress-on-azure-kubernetes-service-fa498ba7e4b4
+       https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml
+       https://gist.github.com/iamNoah1/41434c67cfade2db24a4476d1c54eb7d#file-traefik-values-yaml)
+
+Traefik configuration: using traefik Ingress results in better zero downtime deployment capability. IngressRoutes are directly applied,
+
+Traefik distinguishes between static and dynamic configuration while static configuration refers to startup configuration and
+dynamic configuration to routing configuration.
+
+In the context of deploying Traefik to Kubernetes, the dynamic configuration takes place by using Custom Ressource Definitions. 
+As we use helm for deploying Traefik, the static configuration can be done by providing a config file that gets used by the helm command. 
+So first we create a file named traefik-values.yml 
+
+install-traefik-with-helm.sh
+
+helm repo add traefik https://helm.traefik.io/traefik
+helm repo update
+helm install traefik traefik/traefik -f traefik-values.yml
+
+Troubleshooting:
+
+As there are multiple components included in the process of exposing our microservices, you will have to look in different places
+if something does not work as expected.
+
+First, you should check if all pods are running. The most important one is the traefik-* pod, while * equals a random string.
+After that, you could check, if the pods that represent your microservices are running correctly. 
+Also, check if the services that point to your microservices are created and running. Don’t forget to double-check if they are pointing to the right port.
+If the pods and services are running correctly, check if the ingressRoutes are also created and that they point to the right services respectively.
+Also, check that your Strip Prefix Middleware is created property and set correctly in the ingressRoute definition.
+If everything is set up correctly, the logs of traefik itself will probably be most helpful. Therefore just run kubectl logs traefik-* .
+Lastly, for some troubleshooting, the dashboard might be helpful. The steps used in this article, don’t expose the traefik dashboard explicitly. 
+No worries, you can still access it using port forwarding. 
+Run the following command in order to make the dashboard available on port 9000 of your local machine: kubectl port-forward traefik-* 9000:9000 .
+
+PODS:
+
+initcontainers are exactly like regular containers, except that they always run to completion. 
+Each init container must complete successfully before the next one starts. 
+If a Pod’s init container fails, Kubernetes repeatedly restarts the Pod until the init container succeeds.
+Commands:
+	kubectl run nginx --image nginx --dry-run=client
+	kubectl run nginx –image=nginx –replicas=3
+
+K8s Cluster:
+
+kubectl cluster-info
+kubectl cluster-info dump --output-directory=/path/to/cluster-state 
+	# Dump current cluster state to /path/to/cluster-state
+
+Behind the scenes: kubectl run nginx –image=nginx –replicas=3
+
+	1. When a command is given through kubectl.
+	2. API Server updates the deployment details in ETCD.
+	3. Controller manager through API Server identifies its workload and creates a 
+		ReplicaSet.
+	4. ReplicaSet creates required number of pods and updates the ETCD.
+		Note the status of pods. They are still in PENDING state
+	5. Scheduler identifies its workload through API-Server and decides the nodes onto which the pod are 
+ 	   to be scheduled. At this stage, pods are assigned to a node.
+	6. Kubelet identifies its workload through API-Server and understands that it needs to 
+		deploy some pods on its node
+	7. Kubelet instructs the docker daemon to create the pods. At the same time it updates the 
+	   status as ‘Pods CREATING’ in ETCD through API Server.
+	8. Once pods are created and run,Kubelet updates the pod status as RUNNING in ETCD through 
+	   API Server.
+
+Labels and Selectors
+
+Labels
+• Labels are key/value pairs that are attached to objects, 
+such as pods
+• Labels allows to logically group certain objects by giving 
+various names to them
+• You can label pods, services, deployments and
+even nodes
+
+Labels are key/value pairs that are attached to objects, such as pods. 
+Labels are intended to be used to specify identifying attributes of objects that are meaningful and relevant to users,
+but do not directly imply semantics to the core system. Labels can be used to organize and to select subsets of objects. 
+Labels can be attached to objects at creation time and subsequently added and modified at any time. 
+Each object can have a set of key/value labels defined. Each Key must be unique for a given object.
+
+kubectl get pods -l environment=production
+kubectl get pods -l environment=production, tier=frontend
+kubectl label pod nginx environment=dev
+
+
+Selectors
+
+• Selectors allows to filter the objects based on labels
+• The API currently supports two types of selectors: equality-based and set-based
+• A label selector can be made of multiple requirements which are comma-separated
+
+	1. Equality-based Selector:
+
+• Equality- or inequality-based requirements allow 
+filtering by label keys and values. 
+• Three kinds of operators are admitted = ,==,!=
+Used by Replication Controllers and Services
+
+
+	2. Set-based Selector:
+
+• Set-based label requirements allow filtering 
+keys according to a set of values. 
+• Three kinds of operators are supported: in,notin
+and exists (only the key identifier).
+set-based requirements are more expressive.  
+For instance, they can implement the OR operator on values:
+
+kubectl get pods -l 'environment in (production, qa)'
+
+or restricting negative matching via exists operator:
+kubectl get pods -l 'environment,environment notin (frontend)'
+
+selector:
+  matchLabels:
+    component: redis
+  matchExpressions:
+    - {key: tier, operator: In, values: [cache]}
+    - {key: environment, operator: NotIn, values: [dev]}
+
+matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions,
+whose key field is "key", the operator is "In", and the values array contains only "value". matchExpressions is a list of pod selector requirements. 
+Valid operators include In, NotIn, Exists, and DoesNotExist. The values set must be non-empty in the case of In and NotIn. 
+All of the requirements, from both matchLabels and matchExpressions are ANDed together -- they must all be satisfied in order to match.
+
+Expample: Create a pod that gets scheduled to your chosen node 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    env: test
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    imagePullPolicy: IfNotPresent
+  nodeSelector:
+    disktype: ssd
+
+Create a pod that gets scheduled to specific node 
+You can also schedule a pod to one specific node via setting "nodeName".
+
+Used by ReplicaSets, Deployments, DaemonSets
+
+equality-based: kubectl get pods -l environment=production,tier=frontend
+set-based: kubectl get pods -l 'environment in (production),tier in (frontend)'
+
+and then you can create a new release of the guestbook frontend that carries the track label with different value (i.e. canary), 
+so that two sets of pods would not overlap:
+
+An operator is a set of custom resources and a set of controllers. A controller watches for changes to specific resources in the Kubernetes API and 
+reacts by creating, updating, or deleting resources.
+
+ReplicaSet:
+
+• ReplicaSets are a higher-level API that gives the ability to easily run multiple instances of a 
+given pod
+• ReplicaSets ensures that the exact number of pods(replicas) are always running in the 
+cluster by replacing any failed pods with new ones
+• The replica count is controlled by the replicas field in the resource definition file
+• Replicaset uses set-based selectors whereas replicacontroller uses equality based selectors
+

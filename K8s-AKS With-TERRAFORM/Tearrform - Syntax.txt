@@ -1,0 +1,23 @@
+Terraform Syntax:
+
+	Resources
+	Blocks
+	Arguments
+	Identifiers
+	Comments
+	Input Variables
+	Output Values
+	Migrate Terraform state from local to Remote Storage - (Azure Storage)
+
+	Comments:
+		# begins a single-line comment, ending at the end of the line.
+		// also begins a single line comment, as an alternative to #.
+		/* and */ are start and end delimiters for a comment that might span over multiple lines.
+
+	Terraform Settings 
+
+	Types of Terraform Variables:
+
+		Input Variables
+		Output Values
+		Local Values

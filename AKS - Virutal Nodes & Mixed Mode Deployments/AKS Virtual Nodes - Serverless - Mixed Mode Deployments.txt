@@ -1,0 +1,129 @@
+AKS Virtual Nodes (Serverless) Mixed Mode Deployments: k8s Pods which can be scheduled over both Virtual Nodes and aks agent pools (Worker Nodes) of aks cluster 
+							can be called as mixed mode deployments
+
+		1. Front end web-applications or stateless pods can be scaled by deploying them in Virtual nodes of AKS Cluster.
+		2. Backend statefull applications or stateful pods and its supported pvc can be deploying on regular aks agent node pool (Worker Nodes) . 
+
+Note: During creation of AKS Cluster azure cni will creates a 2 subnets automaticaly for aks provisioned node pool 
+	and virtual nodes so that stateless applications will be scaled on virtual nodes and statefull applications with its supported PVC, related config maps
+	and secrets will be created on aks provisioned agent node pools(worker nodes).
+
+	Database or statefull manifest file with its clusterip service:
+
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  name: mysql
+	spec:
+	  replicas: 1
+	  selector: 
+	    matchlabels:
+	      app: mysql
+	  strategy:
+	    type: Recreate
+	  template:
+            metadata:
+	      labels:
+		app: mysql
+	    spec:
+	      containers:
+		- name: mysql
+		  image: mysql:5.6
+		  env:
+		  - name: MYSQL_ROOT_PASSWORD
+		    valueFrom:
+		      secretKeyRef:
+			name: mysql-db-password
+			key: db-password
+		   ports:
+		     - containerPort: 3306
+		       name: mysql
+		   volumeMounts:
+	             - name: mysql-persistent-storage
+		       mountPath: /var/lib/mysql
+		     - name: usermanagement-db-creation-script
+		       mountPath: /docker-entrypoint-initdb.d
+	      volumes:
+		- name: mysql-persistent-storage
+		  persistentvolumeClaim:
+		    claimName: azure-managed-disk-pvc
+		- name: usermanagement-dbcreation-script
+		  configMap:
+		    name: usermanagement-dbcreation-script 
+
+	---
+
+	apiVersion: v1
+	kind: Service
+	metadata: 
+	  name: mysql
+	spec:
+	  selector:
+	    app: mysql
+	  ports:
+	    - port: 3306
+	  clusterIP: None - This means we are going to use Pod IP
+
+	Front-End Application Manifest and its loadbalancer service:
+
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  name: usermgmt-webapp
+	  labels:
+	    app: usermgmt-webapp
+	spec:
+	  replicas: 2
+	  selectory:
+	    matchlabels:
+	      app: usermgmt-webapp
+	template:
+	  metadata:
+	    labels: 
+	      app: usermgmt-webapp
+	  spec:
+	    containers:
+	      - name: app1-nginx
+		image: stacksimply/kube-nginxapp1:1.0.0
+		imagePullPolicy: Always
+		ports:
+		  - containerPort: 80
+		env:			#Virtual Nodes will expect full dns name of a service 
+		  - name: DB_HOSTNAME
+		    value: "mysql.default.svc.cluster.local"
+		  - name: DB_PORT
+		    value: "3306"
+		  - name: DB_NAME
+		    value: "webappdb"
+		  - name: DB_USERNAME
+		    value: "root"
+		  - name: DB_PASSWORD
+		    valueFrom:
+		      secretKeyRef:
+			name: mysql-db-password
+			key: db-password 
+	    nodeSelector:
+	      kubernetes.io/role: agent
+	      beta.kubernetes.io/os: linux
+	      type: virtual kubelet
+	    tolerations:
+	    - key: virtual-kubelet.io/provider
+	      operator: Exists
+	    - key: azure.com/aci
+	      effect: NoSchedule
+
+	---
+	
+	apiVersion: v1
+	kind: Service
+	metadata:
+	  name: usermgmt-webapp-loadbalancer-service
+	  labels:
+	    app: usermgmt-webapp
+	spec:
+	  type: LoadBalancer
+	  selector:
+	    app: usermgmt-webapp
+	  ports:
+          - port: 80
+	    targetPort: 8080

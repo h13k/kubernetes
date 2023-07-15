@@ -1,0 +1,117 @@
+Helm:
+	Its a package manager for Kubernetes to package yaml files and distribute them in 
+	public and private repositories.
+
+Helm charts:
+
+	A bundle of Yaml files
+	push them to helm repository to make it available for team.
+	Download and use existing helm charts that other people pushed and made 
+	availble in different repositories.
+	commonly used deployments like database applications, elasticsearch, mongodb, MySQL or 
+	monitoring applications like Prometheus that all have this kind of complex setup.
+	All have charts available in some Helm repository.
+	
+	Commands: 
+		Helm install chart-name - reuse the configuration that someone else has already 
+						made without additional effort.
+
+	sharing helm charts became pretty widely used 
+
+	helm hub: public repository of helm
+
+Templating Engine: 
+
+	An application that is made up of multiple micro-services and we are deploying all of them 
+	in our K8S cluster, deployment and service each of those microservices are same but the application
+	name and version are different or docker image name or version tags are different without we have to 
+	write seperate yaml files configuration files for each of those micro-services so we would have multiple
+	deployment service files where each one has its own application name and version defined.
+
+		Using helm we can define a common blueprint for all the micro services 
+		and the dynamic values are replaced by placeholders - this will be a template file
+
+	Usecases:
+		1. Same application acrosss different environments.
+
+	Helm chart structure:
+		 
+	Directory structure:
+
+		mychart/			folder name of the chart
+		  charts.yaml			meta info about the chart
+		  values.yaml			values for the template files, default values we can override
+		  charts/			folder chart will be having chart dependencies, if current chart will depends on other chart those dependencies were stored here
+		  templates/			folder template will be having actual template files are stored.
+
+		Template files will be filled with the values from values.yaml
+
+	Helm version 2:
+
+		1. helm CLT - CLIENT
+		2. SERVER (Tiller) - will execute request from client and create components.
+
+	 1. values.yml:
+
+		In a Helm chart, the values.yaml file in the templates/ directory contains the default values for the configuration of Kubernetes resources 
+		that are deployed with the chart. 
+		The Kubernetes components that can be configured in the values.yaml file depend on the specific chart and the resources it deploys,
+		but here are some examples:
+
+			1. Deployment: The number of replicas, container image name, and container resource limits can be configured in the values.yaml file.
+
+			2. Service: The service type, port number, and target port can be configured in the values.yaml file.
+
+			3. ConfigMap: The key-value pairs for the configuration data can be defined in the values.yaml file.
+
+			4. Secret: The key-value pairs for the secret data such as passwords and API keys can be defined in the values.yaml file.
+
+			5. Ingress: The ingress rules, hostnames, and paths can be configured in the values.yaml file.
+
+			6. PersistentVolumeClaim: The storage class, access mode, and storage size can be configured in the values.yaml file.
+
+			7. DaemonSet: The container image name and resource limits can be configured in the values.yaml file.
+
+			8. StatefulSet: The number of replicas, container image name, and container resource limits can be configured in the values.yaml file.
+			
+			9. Jobs and CronJobs: Jobs and CronJobs are used to perform batch processing in a Kubernetes cluster.
+			 		      The values.yaml file can be used to specify the container image, container resources,
+					      and other settings for the Job or CronJob.
+
+		These are just a few examples of Kubernetes components that can be configured in the values.yaml file of a Helm chart. 
+		The specific components and their configurations will depend on the chart being used.	
+		
+		
+
+what are commonly used helm commands in kuberenetes?
+
+Helm is a package manager for Kubernetes that simplifies the deployment and management of applications and services. 
+Some commonly used Helm commands in Kubernetes include:
+
+	1. helm install: This command installs a chart and creates a new release.
+
+	2. helm upgrade: This command upgrades an existing release to a new version of a chart.
+
+	3. helm rollback: This command rolls back a release to a previous version of a chart.
+
+	4. helm list: This command lists all releases installed in a cluster.
+
+	5. helm uninstall: This command uninstalls a release and deletes all resources associated with it.
+
+	6. helm repo add: This command adds a repository of charts to the local Helm client.
+
+	7. helm search: This command searches for charts in the configured Helm repositories.
+
+	8. helm dependency update: This command updates the dependencies of a chart.
+
+	9. helm lint: This command checks a chart for errors and best practices.
+
+ 	10. helm template: This command generates Kubernetes manifests from a chart without installing it.
+
+These are just a few examples of commonly used Helm commands in Kubernetes. 
+Helm provides many more commands and options to customize the deployment and management of Kubernetes applications and services.
+
+
+
+
+	

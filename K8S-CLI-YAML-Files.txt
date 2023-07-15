@@ -1,0 +1,397 @@
+1. Important points:
+
+	Name convention of deployment is: nginx-depl - (nginx-depl-7d9447675c-j9j8k)
+	Name convention or id of replicaset is: 7d9447675c - 10characters 
+	Name convention or id of pod is: j9j8k - 5characters.
+
+	Layers of Abstraction:	
+
+		1. Deployment manages a replicaset.
+		2. Replicaset manages a replicas of pod.
+		3. Pod is an abstraction of a container.
+		4. container runtime.
+
+
+2. Commands:
+
+	1. kubectl edit deployment deployment name - like change the version of image.
+		behind the scenes pod is again getting created on new version of container image
+		old pod is getting terminating and new pod is getting created simulteneously.
+	2. kubectl logs 
+		which basically shows us what the application running inside the pod.
+	3. kubectl exec -it deployment name --bin/bash
+		which we can able to go inside of the container, will gives the terminal of particular container.
+	4. kubectl delete deployment deployment name - delete deployment
+	5. kubectl apply -f file name- which takes the configuration file written in yaml and execute the file.
+	6. kubectl get pod -o wide: output of pod component in a more descriptive manner.
+	7. kubectl get replicaset -o wide
+	8. kubectl get deployment -o wide
+	9. kubectl get service -o wide
+	10. kubectl get deployment deployment name -o yaml
+	11. kubectl get pod --watch
+		To check the status of cluster for defining specification of the pods for specific kind of component
+	12. kubectl get all => display all components.
+		
+3. Creating a simple deployment yaml file: kubectl touch deployment file name.yaml
+
+	apiVersion: apps/V1
+	kind: Deployment
+	metadata:
+	  name: nginx-deployment
+	  label:
+	    app: nginx
+	spec:
+	  replicas: 1
+	  selector:
+	    matchLabels:
+	      app: nginx
+	  template:
+	    metadata:
+	      labels:
+	        app: ngnix
+	     spec:
+	       containers:
+	       - name: nginx
+		 image: nginx:1.16
+		 ports:
+		 - containerPort: 8080
+
+4. YAML Configuration File in Kubernetes:
+
+	Format of the configuration files is in Yaml:
+
+	1. Its a "human friendly data serialization standard for all programming languages.
+	2. stricts about the indentation - syntax: strict indentation will gives a meaningfull specifaction
+		of requirement.	
+	3. store the config file with your infrastructure code file or own git repository.
+	4. Template: 
+		1. It has its own "metadata" and "spec" section.
+		2. The configuration which we define in spec section of a template will be applied to pod.
+		3. blueprint for pods.
+	5. 3-parts of configuration file:
+		1. metadata: about the component.
+		2. spec: specification of a specifi to the kind of component.
+		3. status: 
+			1. Its is automatically generated and added by k8s.
+			2. What is desired or actual status of the component.
+			3. This is the basis of self-healing feature that could k8s provide.
+			   k8s updating state continously, for example if the status at some point
+			   will say just one replica is runing, then k8s will compare that status with
+			   the specification and will came to know that there is a problem
+			   so another replica needs to be created asap.
+		         4. Where k8s actually get that status data to automatically add and update continously?
+				k8s will pull the status information from etcd key value database.
+				ETCD holds the current status of any k8s component.
+					
+	6. Connecting Deployments to Service to Pods.	
+		
+		1. Pods get the label through the template blueprint.	
+		2. This label is matched by selector.
+
+5. Ports in Service and Pod:
+
+	apiVersion: v1
+	kind: service
+	metadata:
+	  name: nginx-service
+	spec:
+	  selector:
+	    app: nginx
+	  ports:
+	    - protocol: TCP
+	      port: 80
+	      targetPort: 8080
+
+6. Project: creating database 2 pods in a node
+
+	1. MongoDB pod: 
+		Internal service: which basically means that no external requests are allowed to the pod 
+			  	  only components inside the same cluster can communicate with it.
+	2. Mongo Express Pod: 
+		database URL of mongodb so that mongo express can connect to it. - to connect to DB
+		credentials so username and password of that so that it can authenticate  - to authenticate to DB
+
+	3. So the way we can pass this information to Mongo Express deployment is through its deployment yaml file through
+		environmental variables because that's how the application is configured.
+
+	4. Configmap contains data base url - External configuration, centralized, other components can use it.
+	   Secret contains credentials
+	   reference both inside the deployment yaml file 
+
+	5. Once the set up is ready, we are going to need mongoexpress to be accessible through browser.
+	
+	6. Inorder to do that we are going to create external service that will allow external requests
+		to communicate with the pod.
+	
+	7. So the URL will be:
+		-HTTP IP address of Node
+		-Port of external Service
+
+	8. Browser Request Flow through k8s components:
+
+		1. The request comes from the browser, it goes to the external service of the mongoexpress
+			which will then forward it to the mongoexpress pod.
+		2. The Pod will then connect to internal service of mongodb thats basically the URL database
+		   and it will forward it to mongodb pod where it will authenticate the request using the 
+		   credentials.
+		3. (Mongo Express External Service) ----> [Mongo Express POD] ----> (Mongo DB Internal Service) ----> [MangoDB POD] 
+
+	9. This whole setup using k8s configuration files: 
+
+		1. default port of mongodb listens to Port no: 27017
+		2. Environment Variables: MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD
+		3. creating internal service so that components and other pods can communicate to this mongodb
+		4. Deployment & Service in 1 file, because they belong together.
+		5. internal service - communication between service port and pod (target)
+
+		1. (mangodb yaml file,internal service yaml file):				
+			
+			apiVersion: apps/v1
+			kind: Deployment
+			metadata:
+			  name: mongodb-deployment
+			  labels: 
+			    app: mongodb
+			spec:
+			  replicas: 1
+			  selector:
+			    matchLabels:
+			      app: mongodb
+			   template:
+			     metadata:
+			       labels:
+			         app: mongodb
+			      spec:
+			        containers:
+				- name: mongodb
+				  image: mongo
+				  ports:
+				  - containerPort: 27017
+				  env:
+				  - name:  MONGO_INITDB_ROOT_USERNAME
+				    valueFrom:
+				      secretKeyRef:
+					name: mongodb-secret
+					key: mongo-root-username
+				  - name: MONGO_INITDB_ROOT_PASSWORD
+				    valueFrom:
+				      secretKeyRef:
+					name: mongodb-secret
+					key: mongo-root-password
+
+			--- (internal service -yaml file -2)
+
+			apiVersion: v1
+			kind: service
+			metadata:
+			  name: mongodb-service
+			spec:
+			  selector:
+			    app: mongodb
+			  ports:
+			    - protocol: TCP
+			      port: 27017
+			      targetPort: 27017
+
+		2. Secret Yaml file: 
+
+			secret must be created before the deployment.
+			after creation of secret, It can be referenced in deployment.
+			converting text to base64 - echo -n 'username' | base64
+						
+			apiVersion: V1
+			kind: Secret
+			metadata:
+			  name: mongodb-secret
+			type: Opaque
+			data:
+			    mongo-root-username:
+			    mongo-root-password:  
+				    
+		3. Creating MongoExpress deployment and service also an external configuration configMap
+		   where we are going to put the database URL for mongodb.
+
+			1. default port of mongo-express listens to Port no : 8081
+			2. Environment Variables: ME_CONFIG_MONGODB_SERVER,ME_CONFIG_MONGODB_ADMINUSERNAME,ME_CONFIG_MONGODB_ADMINPASSWORD
+				1. which credentials to authenticate - mongodb can authenticate that connection
+				            1. ME_CONFIG_MONGODB_ADMINUSERNAME: 
+				            2. ME_CONFIG_MONGODB_ADMINPASSWORD:
+				2. which database application it should connect to - mangodb address database address
+						It should connect to the internal service and
+					    3. ME_CONFIG_MONGODB_SERVER:
+			3. external service:
+				1. Loadbalancer assigns service an external IP address and so accepts external requests. 
+				2. nodePort: Pod where this external IP address will be opened.
+					     port for external IP address, This is the Port we need to put into browser
+						range: 30000-32767
+		3. mongo-express,external service yaml files:
+
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: mongo-express
+		  labels:
+		    app: mongo-express
+		spec:
+		  replicas: 1
+		  selector:
+		    matchlabels:
+		      app: mongo-express
+		   template:
+		     metadata:
+		       labels:
+		         app: mongo-express
+		     spec:
+		       containers:
+		       - name: mongo-express
+			 image: mongo-express
+			 ports:
+			 - containerPort: 8081
+			 env:
+			 - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+			   valueFrom:
+			     secretKeyRef:
+				name: mongodb-secret
+				key: mongo-root-username
+			 - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+			   valueFrom:
+			     secretKeyRef:
+				name: mongodb-secret
+				key: mongo-root-password
+			  - name: ME_CONFIG_MONGODB_SERVER
+			    valueFrom:
+			      configMapKeyRef:
+				name: mongodb-configmap
+				key: database_url
+
+		--- (external service -yaml file - 2)
+		
+		apiVersion: v1
+		kind: Service
+		metadata:
+		  name: mongo-express-service
+		spec:
+		  selector:
+		    app: mongo-express
+		  type: LoadBalancer
+		  ports:
+		  - protocal: TCP
+		    port: 8081
+		    targetPort: 8081
+		    nodePort: 30000
+		  				
+			
+		4. ConfigMap yaml file:
+			
+			1. ConfigMap must already be in the K8s cluster, when referencing it. 
+		
+		  apiVersion: v1
+		  kind: ConfigMap
+		  metadata:
+		    name: mongodb-configmap
+		  data:
+		    database_url: mongodb-service	
+
+
+Namespace yaml configuration file: cluster inside the cluster.
+				   group resourceses in namespaces.
+				kubectl apply -f file name --namespace=namespace-name 
+				choco install kubex - 
+					kubens - also called kubenamespace using this we can active specific namespace by inactivating current namespace
+						 so that resources will be created under active namespace.  
+
+1. Create Components in a namespace using yaml:
+
+	apiVersion: v1
+	kind: configmap
+	metadata:
+	  name: mysql-configmap
+	  namespace: my-namespace
+	data:
+	  db_url: mysql-service.database
+
+	Scenarios of Namespaces:
+
+		1. Resources grouped in namespaces: Logically grouping our resources inside of the cluster 
+						 ex: Database namespace, Monitoring namespace
+			    			 pod namespace, Elastic search.
+		2. conflicts: 2-teams were using same cluster accidently with same deployment name but configuration is different
+			   there may be having overriding issues for deployemets while they are creating deployments.
+			   even the configuration is different because of same deployment name teams may override 
+			   to avoid such conflicts namespaces will be used, so that each team will work in their own namespace
+			   without disrupting the other.
+		3. Resource sharing: stagging & Development
+				  If we want to host both stagging and development environment in single cluster reason because
+				  some components like ingress or nginix or elastic stack will be used for both environments
+				  using namespaces, re-use of shared resources or components by both environments instead of deploying common resources
+				  twice in both the environments without having to setup the seperate cluster.  
+		4. Resource sharing: Blue/Green Deployment
+				     Blue/Green deployments are 2 different version of production in a cluster.
+				     If one is active that is in production and other one is going to be the production version.
+				     The versions of the applications in those deployment namespaces will be different.
+				     using namespaces, re-use of shared resources or components by different deployment versions instead of deploying common resources
+				     twice in both the deployments without having to setup the seperate cluster.
+		5. Access and Resource Limits on Namespaces:  
+				Each and every team has their own, isolated environments
+				Each namespace consumes resources like CPU,RAM in a limit
+				per namespace we can difine a resource quota.
+
+
+Ingress Yaml file: kubectl apply -f file name - which creates ingress and creates IP address for the dns host name
+		   once Ip address generated for dns map that ip address to host configuration file - /etc/hosts
+		   kubectl get ingress -n namespace-name - checks wheather ingress created or not.
+		   kubectl describe ingress ingress-name -n namespace-name - [-n = namespace]
+			request will comes to minicube cluster will be handed over to ingress controller
+			and ingress controller will evaluate below rule that defined and forward that request to service.
+		   Forwarding with one ingress of the same dns to multiple applications using multiple path
+
+	apiVersion: networking.k8s.io/v1beta1
+	kind: Ingress
+	metadata: 
+	  name: dashboard-ingress
+	  namespace: kubernetes-dashboard
+	spec:
+	  rules: 
+	  - host: dashboard.com
+	    http:
+	      paths:
+	      - backend: 
+		  serviceName: kubernetes-dashboard
+		  servicePort: 80 
+	
+
+	2. Configuring tls cirtificate:
+
+		Secret component must be in the same namespace as the ingress component
+		
+	apiVersion: networking.k8s.io/v1beta1
+	kind: Ingress
+	metadata: 
+	  name: tls-example-ingress
+	spec:
+	  tls:
+	  - hosts:
+	    - myapp.com
+	    secretName: myapp-secret-tls
+	  rules: 
+	  - host: myapp.com
+	    http:
+	      paths:
+	      - backend: 
+		  serviceName: myapp-internal-service
+		  servicePort: 8080
+
+		--1. security component for ingress will be below:
+
+	 apiVersion: v1
+	 kind: Secret
+	 metadata:
+	   name: myapp-secret-tls
+	   namespace: default
+	 data:
+	  tls.crt: base64 encoded
+	  tls.key: base64 encoded
+	 type: kubernetes.io/tls
+
+
+	 

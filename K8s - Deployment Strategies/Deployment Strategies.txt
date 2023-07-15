@@ -1,0 +1,136 @@
+Leveraging Service Meshes for A/B Blue-Green, and Canary Deployments - ("Progressive Delivery"):
+
+	Progressive Delivery Techniques: with Flagger abd Service Mesh
+
+		Flagger - The Progressive Delivery Operator
+			  Is a kuberenetes operator that automates the promotion of canary deployments using
+			  App Mesh, Istio, Linkerd routing for traffic shifting and Prometheus metrics for canary analysis
+			
+		When not using a service mesh, Flagger can orchestrate canary releases with ingress controllers like Gloo & NGINX.
+		Flagger implements a control loop that gradually shifts traffic to the canary while measuring key performance indicators.
+		Based on the KPIs analysis a canary is promoted or aborted.
+
+		Service Mesh Providers: Istio
+					App Mesh - AWS
+					Linkerd
+
+			What Service Mesh can do? - 
+
+		Deploying Servcies Seamlessly with No Down Time:- By Applying Different Deployment Strategies
+
+			1. Canary (Progressive traffic shifting)
+				- Istio, Linkerd, App Mesh, NGINX, Gloo
+				  The Idea is it will trying to make Deployment seamless 
+				  To Present the service in such a way to where it never appears to be down to the end-user.
+				  Whole idea here is that the user doesn't know that we have shifted versions that we have gone
+				  from primary to secondary
+				  
+
+			2. A/B Testing (HTTP headers and cookies traffic routing)
+				- Istio, App Mesh, NGINX
+
+			3. Blue/Green (traffic switching)
+				- Kubernetes CNI, Istio Linkerd, App Mesh, NGINX, Gloo
+
+			4. Mirroring (traffic shadowing)
+				- Istio
+
+		Manual Canary setup:								Automated canary setup: 
+
+			1. Canary Deployment								K8s Objects: Deployment, Horizontal 
+			2. Canary ClusterIP Service									Pod Autoscaler
+			3. Canary Horizontal Pod Autoscalar
+			4. Primary Deployment
+			5. Primary CluserIP Service
+			6. Primary Horizontal Pod Autoscaler - 9385722508 
+
+		Service Mesh Objects:								Flagger Objects:
+
+			1. Canary routes/destination rules/nodes					Canary
+			2. Primary routes/destination rules/nodes
+			3. Virtual services
+			4. Traffic split 
+		
+		Flagger Yaml Manifest:
+	
+			apiVersion: flagger.app/v1alpha1
+			kind: Canary
+			metadata:
+			  name: podinfo
+			  namespace: test
+			spec:
+			# deployment reference
+			targetRef:
+			  apiVersion: apps/v1
+			  kind: Deployment
+			  name: podinfo
+			  # hpa reference (optional)
+			autoscalerRef:
+			  apiVersion: autoscaling/v2beta1
+			  kind: HorizontalPodAutoscaler
+			  name: podinfo
+			# the maximum time in seconds for the canary deployment
+			# to make progress before it is rollback (default 600s).
+			progressDeadlineSeconds: 60
+			service:
+			  # container port
+			  port: 9898
+			  # port name (can be http or grpc)
+			  portName: http
+			  timeout: 15s
+			  # host names (optional)
+			  - app.example.com
+
+		Canary CRD - Analysis spec:
+
+			# schedule interval (default 60s)
+			interval: 1m
+			# maximum number of failed metric checks
+			# before rolling back the canary
+			threshold: 10
+			# max traffic percentage routed to canary
+			maxWeight: 50
+			# canary increment step
+			stepWeight: 5
+			metrics:
+			  - name: request-sucess-rate
+			    # minimum req success rate percentage (non 5xx)
+			    threshold: 99
+			    interval: 1m
+			  - name: request-duration
+			    # maximum req duration P99(millisecond)
+			    threshold: 500
+			    intervel: 30s
+			webhooks:
+			  - name: load-test
+			    url: http://flagger/loadtester.test/
+			    timeout: 5s
+			    metadata:
+			      cmd: "hey -z im - 10 -c 2 http://podinfo.test:9898"
+
+		Flagger - Validation process
+
+		Flagger let you define KPI's and thresholds 
+		The decision to pause the traffic shift, abort or promote a canary is based on:
+
+		1. Deployment health status
+		2. Request sucess rate percentage (Service Mesh metric)
+		3. Request Latency average value (Service Mesh metric)
+		4. Custom metric cheks (Prometheus queries)
+		5. Webhooks (integration & Load Testing etc)
+
+		GitOps Pipeline - Flux+Flagger
+
+		Dployment+Canary+HPA ---> Cluster repo <---> Flux ---> Flagger ---> canary <--- Ingress 
+							
+								
+							     Docker	Prometheus
+
+		GitOps Pipeline - Flux+Helm Operator+Flagger
+
+		Namespace+Canary+Helm Release ---> Cluster Git repo <---> Flux Helm Operator ---> Flagger ---> canary <--- Ingress 
+							
+								
+							     		   Helm Repository	  Prometheus
+
+		

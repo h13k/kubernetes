@@ -1,0 +1,547 @@
+Dev-Ops Essential Practices:
+
+Plan --> Build --> Continous Integration --> Deploy --> Operate --> Continous Feedback.
+OODA Loop-(Observe,Orient,Decide,Act)-(Business,Market,Needs,Current user behaviour and available telemetry data).
+
+1. Agile Planning.
+2. Continous Integration.
+3. Continous delivery.
+4. Monitoring of Applications.
+
+Shorten our cycle time,When we adopt DevOps practices:
+we shorten our cycle time by working in smaller batches.
+
+1. Using more automation.
+2. Hardening our release pipeline.
+3. Improving our telemetry.
+4. Deploying more frequently.
+
+Dev-Ops Cycle:
+
+1. Continuous Integration drives the ongoing merging and testing of code, which leads to finding defects early. 
+   Other benefits include less time wasted on fighting merge issues and rapid feedback for development teams.
+
+2. Continuous Delivery of software solutions to production and testing environments helps organizations quickly fix bugs 
+   and respond to ever-changing business requirements.
+
+3. Version Control, usually with a Git-based Repository, enables teams located anywhere in the world to communicate effectively during daily development activities. 
+   Also, integrate with software development tools for monitoring activities such as deployments.
+
+4. Use Agile planning and lean project management techniques to:
+	Plan and isolate work into sprints.
+	Manage team capacity and help teams quickly adapt to changing business needs.
+	A DevOps Definition of Done is working software collecting telemetry against the intended business goals.
+
+5. Monitoring and Logging of running applications. Including production environments for application health and customer usage.
+   It helps organizations create a hypothesis and quickly validate or disprove strategies. Rich data is captured and stored in various logging formats.
+
+6. Public and Hybrid Clouds have made the impossible easy. The cloud has removed traditional bottlenecks and helped commoditize Infrastructure.
+   You can use Infrastructure as a Service (IaaS) to lift and shift your existing apps or Platform as a Service (PaaS) to gain unprecedented productivity. 
+   The cloud gives you a data center without limits.
+
+7. Infrastructure as Code (IaC): Enables the automation and validation of the creation and teardown of environments to help with 
+   delivering secure and stable application hosting platforms.
+
+8. Use Microservices architecture to isolate business use cases into small reusable services that communicate via interface contracts.
+   This architecture enables scalability and efficiency.
+
+9. Containers are the next evolution in virtualization. They are much more lightweight than virtual machines, 
+   allow much faster hydration, and easily configure files.
+
+AZURE Services:
+
+	1. Compute: Data bricks,spark.
+	2. Storage: Azure storage Account.
+	3. BigData: Data lake.
+	4. Scaling: Azure Scaleset(Custom,manual scaling of VM's)
+	5. Loadbalancer: (Region level)Azure Load Balancer-(Public,Private Load-Balancers(Health checks)-(Front-end IP Configuration)-[Dedicated IP assigned to multiple instances]).
+	6. Server-Computation: Azure VM
+	7. Network: Azure vnet,Virtual network gateways,Network security groups(Inbound,Outbound),Bastions,subnets,Address pool.
+	8. Azure App services-WebApps(PAAS): It will act like geo-region(Hosting of an application across multiple zones).
+	9. Availability Set: collection of Fault domain-(Rack),Update domain-(Virtual Resources) for a reliable application performance.
+	10. Azure Traffic-Manager: DNS Based load-balancer(different routing methodologies applied for application reliability) - 
+					with the help of App services-WebApps(PAAS) service - Global level accross azure regions.
+ 	11. Azure Blobe: Immensly scalable object store for text and binary data.
+	12. Azure Files: Those are organized file shares for cloud or on-primises.
+	13. Azure Queue: It is a messaging store for consistent messaging b/w application components.
+	14. Azure Tables: NOSQL store for schema-less storage of structured data.
+	15. Azure disks: Block-level storage volumes for Azure Virtual Machines. 
+
+Services Comparision between AWS & Azure:
+
+	1. AWS CloudFront - Azure Content Delivery Network (CDN)
+	2. AWS Lamda - Azure Functions (Serverless)
+	3. AWS Elastic BeanStalk - Azure App Services
+	4. AWS VPC	- Azure Vnet
+	5. AWS EC2 - Azure VM
+	6. AWS Autoscaling groups - Azure Virtual Machine scale set
+	7. AWS NACL - Azure Network security group
+	8. AWS Security Group - Azure network interface
+	9. AWS Network Load Balancer - Azure Standard Load Balancer
+	10. AWS Application Load Balancer - Azure Application Gateway
+	11. AWS RDS - Azure SQL  
+	12. AWS Route53 - Azure DNS 
+	13. AWS EFS - Azure File storage
+	14. AWS Snow Family - Azure Data Box
+	15. AWS EBS - Azure Disk
+	16. AWS DynamoDB - Azure Cosmos DB - (Serverless)
+	17. AWS DMS - Azure DMS			
+	18. AWS DirectConnect - Azure ExpressRoute
+	19. AWS CloudWatch - Azure Monitor
+	20. AWS IAM - Azure AD & RBAC
+	21. AWS S3 Tiers - Azure Blob tiers - (Hot cool Archive)
+	22. AWS S3 Buckets & Objects - Azure Storage Account, Container and Blob 
+
+Features: 
+
+	1. On-Demand Provisioning: Ask for what you need, when you need and when to stop
+	2. Scalability in Minutes: Scaleup or down depending on usage or needs.
+	3. Pay as you consume: Pay only for what you use. 
+	4. Abstarct resources: Focus only on your needs, not on the hardware specs 
+	5. Efficiency of Experts: Utilize the skills,knowledge and resources of experts
+	6. Measurable: Every unit of usage( Managed service) is measurable.
+
+(http://dev.azure.com/): where Azure-Devops tasks takes place
+
+TFS: Test Foundation Server-(Which manages software projects which are running in both agile and scrum) 
+
+1. Azure Boards: Create work items(Components: Workitems,Boards,Backlogs,Sprints,Dashboard)
+  		 Managing the work for our software projects
+2. Azure Repos: Source code will be placed 
+3. Azure Pipeline: Build,test,deploy of code will be happening in Azure Pipeline - (CI/CD).
+4. Azure Test Plans: After Build Release of code will be in prod,dev,UAT Environments(Testing of an Application in Azure Test plans).
+5. Azure Artifacts: Binary artifacts will be stored in Azure Artifacts
+
+Cloud Devops Engineer:-
+		(Azure-Devops- Boards,Pipelines,Test-plans,Artifactory).
+		(AWS-Devops,Devops).
+
+Value for this role: Better standard of living.
+
+Roles:
+	1. Agile Boards Role
+	2. Git-hub admin role
+
+Target Market: Industry,Size,Location,Revenue
+
+1. Planning Phase: (Ex: JIRA-Planning Tool)  
+
+Water-Fall Method: lack of Time consumption,Budget lacking
+		   Application Delivery to a customer takes more time as whole project will be completed by 
+		   different teams in a fixed time intervel which is gona be months and years  
+	 	   and many issues will be raised even delivering or about to deliver an application to customer.
+		   There will no iterations during SDLC process thats the main reason for failure of water-fall model or methodology. 
+
+Fuctional Requirement Document(FRD): Which will be generated over planning phase 
+Based on Business owner's "FRD" - Designer will design the web pages. 
+		     
+Agile: Its a Methodology in a Modern software development practise.
+       As we are in a dynamic world, Its a continous change of processes and nothing is constant.
+       Which Creates a value for a customer.   
+       Derive the value every week to customer.
+       Continous delivery of a product in several different sprints(Sprint: Time Intervel).
+
+Stakeholder: Who invests and give directions for a project under stackholder product owner will be there 
+             Product owner will create a backlog and working with a scrum team and delivering value to customer in specific sprints.
+
+Scrum: 	1. Its a framework which is a part of Agile Methodology, Its nothing but adaptive and interative way of executing process.
+	2. (Plan,Design,Develop,test,deploy,review,launch)- Will be in different sprints-(Each and every sprint will increases a value for a customer).
+	3. Scrum is a framework within which people can address complex adaptive problems, 
+	   while productively and creatively delivering products of the highest product value.
+
+		Product Owner: (Responsible for Backlog grooming)-Who Delivers the value for customer 
+		Scrum Master: Work with scrum team and Deliver the value for the product owner.
+			      Mainly Responsible for delivering sprints.
+
+Scrum Team: Each Sprint will be having scrum team, Scrum Team is a combination of various teams working togather for a continous delivery of an application to customer 
+            in multi-iterations which gives initial value from scratch and incremental value to customer over every sprint.
+
+Roles - (Product Owner,Devlopers-(Front-End,Back-End Developers),Testers,Designer(UI/UX),Business Analysts,Scrum Master,Devops or Cloud Engineer) - 9 to 12 People Min.
+		SRE(Site Reliability Engineer): Who monitors the site, His responsibility is to make sure site should be up and running 24/7.
+						Production issues should be fixed during site down-time by him.
+		Devops-Engineer: Responsible for creating the environment,setting up environment for application and gives production support as well.
+
+Daily Scrum Process Flow:(Sprint Planning,Sprint Review,Sprint retrospective)
+
+1. A Product backlog created by product owner who is responsible for product delivery according to business needs of a customer.
+	(backlog: List of features or items that we have to deliver to customer).
+2. Based on product backlog "sprint planning"(Ex: 1st week sprint-Depends on size of project).
+3. Sprint backlog will be generated from backlog.
+4. Daily Scrum meeting will be scheduled everyday regarding what are issues and work distribution to different teams who are working on 
+   ongoing current sprint backlog or what will be plan of upcoming sprint backlog.
+5. "Sprint review" will be scheduled on every week depends on size of sprint. 
+6. Sprint Retrospective: What went well,what didnt go well,why it didnt go well,how it will be fixed-what has to be done for improving productivity,
+			 Positives and negatives,understanding process,what are the challenges faced during backlog work in a specific sprint.
+
+
+Technologies used in LMS Application: WebApplication,Mobile Application-
+					(FrontEnd: HTML,CSS,React, Back-End: NodeJS, Database: Mango-DB).
+					(Angular(Google),React(Facebook) are front-end frameworks of JavaScript
+					  NodeJS,Java,Python,.Netcore are the Back-end framework of JavaScript).
+
+Features of LMS Application:	
+				1.  Admin,User Login Screen: 1st Priority
+					Sub-Task: Forgot Password		
+			    	  	Sign up
+				2. My Courses.
+				3. Cirtificates.
+				4. Report.
+
+CRM: WebApplication,Mobile Application-(FrontEnd: HTML,CSS,React, Back-End: NodeJS, Database: Mango-DB).
+	(Customer Relationship Management)
+
+
+Epic: Its nothing but grouping of tasks.(EPIC-->Issue-->Feature-->Tasks)
+Example for a basic Scrum process in an Agile-Methodology for an application:
+
+	Epic 						Feature 		Sprint-1		Sprint-2		Sprint-3
+
+	1. Creating Web Application			Login
+							My Courses 
+							Score
+							Assignment
+							Certificates
+
+	2. Creating Mobile Application			Login
+							My Courses
+							Score 
+							Assignment
+							Certificates
+
+	3. Creating Admin Application			Report
+							Content
+							Users
+
+Continous Integration: Integrating version control,build,test,release tools.
+Continous deployment: delivering version control,build,test,release togather known as deployment.
+
+Version Control:
+
+Building an Environment for developers for developing an application code in different use-cases: 
+
+1. Use-case where new developer.
+2. Use-case where existing developer.
+3. Use-case where existing project.
+4. Use-case where new project.
+
+Use-Case:-I	New Developer	New Project
+		New Developer 	Existing Project
+
+Different types of code:
+
+	1. Front-end code.
+	2. Back-end code.
+	3. Admin code:  Its for configuration
+			Admin makes sure upload different content into web application for various user activities.
+		
+(1. C,C++ will be used to write code on different machines(Laptops,TV's)-(Code on top of chips)
+ 2. For Software development life cycle Javascript,Java will be used.)
+
+What is Environment? 
+what are the different Environments do we have in any company?
+why do we need different environments?
+
+	1. Dev Environment: For code deploying by developers.
+	2. QA Environment: Once application code is prepared by developers, application will be tested over Manual (or) Automation QA Team in this environment.
+	3. Stagging Environment:
+	4. Production Environment: Is where the end users will start using application.
+				   Once application is in prod environment there will be no more changes to be made into application.				   
+
+Git-Hub: Version Control
+
+Git: 	Its a repository where we can do all the actions for setting up an application code.
+	Its a coding mechanism which can contact with any version control system-(Repos).
+	Its an open source version control system where developers can commit,push changes.
+
+Github: Its a version control system, Where as multiple developers can work collaboratevly in a single platform.
+.gitignore: Files which are not related to code it ignore those files-(Ex: Docker file).  
+
+1. Create Repository.
+2. Clone from others existing code.
+3. Push the code to local system.
+4. Make the changes into code which is pushed into local system
+	1. Case-I: What if single developer does a change? how the code will be pushed to central repository?
+	2. Case-II: What if multiple developers does a change? how the code will be pushed into central repository?
+	3. Case-III: What are the different branching strategies?-(Dev,Qa,Prod).
+
+Git commands:
+1. echo "text" > file name.
+2. git status: which helps to view wheather anyone made latest changes into code.
+3. git add: add the modifications in which developers had modified into specfic file - Adding changes content is stagged
+4. git commit -m: which save the changes ready for production
+5. git push: pushes the changes made into code from local to distributed central repository
+
+Testing Phase:
+1. Functional testing: Make sure all the functions are working in an application(Sub-option level testing in every module).
+2. User Acceptance testing: whole flow end to end is working or not - (component level testing).
+3. Load Testing: Makes sure application should be up-end running for more no of users without downtime.
+
+Azure Hierarchy: BOTO3
+
+	Tenant ID: Its a collection of Multiple Subscription groups. 
+	Subscription: Its like a folder and collection and segregation of resource groups for tracking bill easily.
+	(Azure Active Directory-->Tenant ID-->Subscription Groups-->Resource Groups-->Vnet-->Resources).
+	Resource Group: Group of resources which can be isolated present in a container. 
+
+	Re-deploy:	It will create a new instance in same region wheather it is in same rack or it will be different rack of different or same room.
+			Migration of new azure host.(can't connect to virtual machine - There is no data loss but Old VM Will be deleted automatically). 
+			Validates Uderlying hardware. 
+	Re-apply:	(Virtual machine in a failed state? - Try reapplying your virtual machine’s state. This operation will rerun VM provisioning and helps to solve the VM failed state,
+			 in case when VM provisioning failed while executing a previous VM action.)
+	
+	Network Security Groups:
+
+		NSG's acts as firewall at subnet level
+		Used to control inbound and outbound traffic
+		Rules created in NSG will be applicable to all instances in that subnet.
+		Each rule has its own priority defined as a number.
+
+	Network Interfaces:
+
+		NSG's acts as firewall at machine or instance level.
+
+	Gateway Subnets: will be used to communicate between 2 different networks
+	General Subnets: will be used to communicate internally within the subnet between 2 instances of a different subnets in a vnet.
+
+1. Vnet to Vnet peering: Communication between 2 virtual networks in a same region
+
+	1. subscription-->Resource-group-->Vnet1-->subnet1-->virtual machine1. 
+	2. subscription-->Resource-group-->Vnet2-->subnet2-->virtual machine2.
+	3. Establish a communication between 2 vnet's in a same region.
+		(Vnet Service: Azure Virtual Network)
+		(VM: Azure Virtual Machine)
+
+2. Global peering: Communication between 2 virtual networks over different regions-(Communication between onprimises datacenter and azure resources).
+
+	1. subscription-->Resource-group-->Vnet1-->subnet1-->virtual machine1. 
+	2. subscription-->Resource-group-->Vnet2-->subnet2-->virtual machine2.
+	3. Establish a communication between 2 vnet's in a different region.
+
+3. Point-to-site VPN:
+
+	A Point-to-Site (P2S) VPN gateway connection will create a secure connection to your virtual network from an individual client computer. 
+	A P2S connection is established by starting it from the client computer. 
+	VPN Gateway: Virtual Private Network - (Azure Virtual network gateway) our on-primises networks to azure through site-to-site VPN  .
+	1. subscription-->Resource-group-->Vnet1-->subnet1-->virtual machine1VPN-Gateway(IP Pool). 
+		IP Pool: Which Generates Unique IP Address to local machine for connecting remote machine.
+		Create Client & Root Cirtificataions:
+			1. Client Cirtification: should be in client machine.
+			2. Root Cirtification: Should paste in VPN. 
+	2. Select Protocol Type based upon operating system:
+		1. SSTP(SSL) - Windows OS
+		2. IKEv2 - MAC
+		3. OpenVPN(SSL) - Multi-Operating System.
+
+4. Azure ExpressRoute: Direct Connect 
+
+	ExpressRoute lets you extend your on-premises networks into the Microsoft cloud over a private connection with the help of a connectivity provider. 
+	With ExpressRoute, you can establish connections to Microsoft cloud services, such as Microsoft Azure and Microsoft 365.
+
+	Connectivity can be from an any-to-any (IP VPN) network, a point-to-point Ethernet network, or a virtual cross-connection through a connectivity provider 
+        at a colocation facility. 
+	ExpressRoute connections don't go over the public Internet. 
+	This allows ExpressRoute connections to offer more reliability, faster speeds, consistent latencies, 
+	and higher security than typical connections over the Internet. 
+	
+5. Availability Zone: 	There is no interconnection between data centeres in a region(5-8 Regions it will support).
+			VM's will spin up as per region level  
+   Availability Set: 	An Availability set is a logical grouping of Vms that allows azure to understand how our application is built to provide for redundancy and availability.
+		     	two or more VMs are created within an availability set to provide for a highly available application.
+		     	(There is no cost for Availability set, just we need to pay for each VM instance that we created across availablity set).
+			Each Availability set can be configured with 3-Fault domains(Racks) and twenty update domains(Group of Virtual Servers).
+			Its a logical grouping of Update domains and these will be distributed or shared virtual resources accross different fault domains.
+			One Update domain can have multiple virtual servers,One fault domain can have multiple update domains.
+			Update Domain: 	Indicate groups of virtual machines and underlying physical hardware that can be rebooted at same time.
+					Only one update domain can be rebooted at a time.
+					From time to time patches and software updates need to be applied, Some updates required servers to be rebooted.
+			Fault Domain:	Its a rack of servers which consumes mostly subsytem like switches,power,cooling etc.
+					when our VM's on an availability set, then to protect VMs from failure, Azure spread them on fault domain and update the domain.
+					This approach limits the impact of potential physical hardware failures, network outages, or power interruptions.
+			Scenarios: Unplanned H/w Maintanance,Un-expected downtime,Planned Maintanance event.
+			(AWS-Placement Group). VM's will spin up as per (hardware) within on-premises specific Datacenter level.	
+			
+   Virtual Machine Scale-set:	which lets us to create and manage group of load blanced VMs.
+				The number of VM instances can automatically increase or decrease inresponse to demand or defined schedule
+				Benefits: Easy to create and manage VMs.
+					  Provides high availability and application resiliency by distributing VMs across availability zones or fault domains.
+					  Allows our application to automatically scale as resource demand changes, Works at large scale.
+						Azure Virtual Machine Scale-set: Autoscaling
+						(Azure Cirtification Programs: AZ-104,AZ-305-Solution Architect). 
+
+   Azure-VM: Its a compute service offered by Azure, Its a virtual machine hosted on a hypervisor which uses page blob as storage.
+		blob: binary large objects 
+
+6. Azure Load-balancer: Its a layer-4 (TCP,UDP) load balancer that provides high availability by distributing incoming traffic among healthy VMs
+			A load balancer health probe monitors a given port on each VM and only distributes traffic to an operational VM.
+
+			We define a front-end IP configuration that contains one or more public IP addresses. This front-end IP configurations allows our load-balancer
+			and applications to be accessible over the internet.
+
+			Virtual machines connect to a load balancer using virtual network interface card(NIC). To distribute traffic to the VMs, a back-end
+			address pool contains the IP addresses of the virtual(NICs) connected to the load balancer.
+
+			To control the flow of traffic, we define loadbalancer rules for specific ports and protocals that map to our VMs.
+			Types of Load-balancers: Public,Internal (or) Private Load balancers.
+
+			Public Load-Balancer: It can provide outbound connections for VMs inside our virtual network.
+					      These connections are accomplished by translating their private IP addresses to public IP address.
+					      Used to load balance internet traffic to our VMs.
+
+			Private(or)Internal Load-Blancer: Internal load balancers are used to load balance traffic inside a virtual network.
+							  (Hybrid Scenario)-(Backend Services).
+
+			Without Availability set, Load-blancer will not be able to create.
+			Front-end IP Configuration: Dedicated IP For multiple servers(to overcome IP address conflict), 
+						    Associate Load balancer to Front-end configuration option(Public IP Addresses- Map Load Balancer).
+			Back-end pool:  Its a place where multiple servers were added and health probe will be configured which 
+					identifies which server is healthy or unhealthy and route traffic to healthy server.
+			Loadbalancing rule:  Frontend-IP Address,back-end pool,Protocal,portNo(front,back),healthprobe,Ideal time out().
+			(Ideal time out: Its a condition and the time intervel where load balancer can distribute the load and route traffic to helathy servers 
+				without causing any downtime issue for users). 
+			Microsoft RRAS: Remote & Routing Access Server.
+
+Power-Shell Commands: 	Add-AzureRmaccount
+			Get-AzureRmVM
+			Firewall.cpl
+			Install-Module AzureRM -Verbose -force
+
+Intra Vnet-Peering:Peering between Master Vnet (or) Management Vnet to Multiple slave Vnet's in same region.
+				  Master Vnet(VM's<-->Public Ip's)--->Slave Vnet's(VM's).
+				  Uses: No need of assigning public Ip's to Slave Vm's in slave Vnet's
+					Cost reduction for licenses.
+					Easy Management.
+
+Azure Network watcher:  Monitor,diagnose,view metrics,enable and disable logs for resources in Azure Vnet.
+			Monitor and repair the network health of Iaas products which includes Vm's,Application Gateways,Load Blancers etc.
+			(Extensions: Network watcher Agent for windows).  
+
+IPSec-VPN: Management VMs in multiple Vnets without IP's 
+Internet Key Exchange(IKE): 
+
+Network Security Group: Its a security level, It will be applied to both Azure subnet level and VM Level.
+			Direct Subnet Association.
+			Service Tag: Virtual Network,Azure Load-Balancer,Internet.
+			     
+Security: Azure-OMS(Microsoft  Operations Management Suite - Workspace).
+Firewall As A Service(FAAS)
+
+Azure-Traffic Manager: (Routing methodology)Global level load balancer - DNS Based traffic load balancer, This service allows us to distribute the traffic to public facing 
+ 			applications across the global azure regions. Traffic Manager also provides public end-points with high availability and quick
+			responsiveness. Traffic manager uses DNS to direct the client requests to the appropriate service endpoint based on traffic-routing
+			method. It also provides health monitoring for every end-point. End-point can be any internet facing service hosted inside or outside
+			of azure.
+				Uses: Increase application availability: Monitoring end points Automatic failover when endpoint goes down.
+				      Improve Application performace: Traffic manager improve the responsiveness of our website by directing endpoint with lowest latency.
+				      Service maintanance without downtime: Even We have a planned maintanance window for our application without downtime Traffic manager
+										can direct traffic to alternative endpoints while the maintanance is in progress.
+				      Combine hybrid applications: Supports external,non-azure endpoints enabling it to be used with hybrid & on-primises deployments.
+							Scenerios: Burst-to-cloud,cloud-migration,Failover-to-cloud.
+				      Distribute traffic for complex deployments: Nested traffic manager profiles,multiple traffic routing methods,flexible rules to scale.			
+
+Routing Methodology: Azure Traffic manager supports - 6 Types of routing methodologies:
+			1. Priority,Weighted,Performances,Geographic,Multivalue,Subnet.
+			2. User-Webrequest-->Traffic Manager(Applies routing methodologies according to routing scenerio) ---> O/P
+				1. Priority: Endpoints were prioritized but will not share no's while cofiguring endpoint optional priority setting(1-1000).
+					     Lower the value represents a higher priority.
+				2. Weighted: Used to distribute traffic evenly or to use a pre-defined weighting.
+				3. Performance: Choose performance routing when End-points From different geographical location if end users want to use closest
+						end-point for lowest network latency.
+						Deploying end-points in two or more locations across the globe can improve the responsivenes.
+						Route traffic to the location that is closest by measuring network latency to end users.
+						Traffic Manager maintains an internet latency table to track the round trip time b/w IP Addr ranges & Azure data center.
+				4. Geographic:  Users get directed to specific endpoint based on geographic location to access the webapplication.
+						World-any region.
+						Regional grouping,Country/region,state/province.
+				5. Multivalue: Allows us to get multiple healthy endpoints in a single DNS Query response.
+					       All healthy end-points are returned and are subjected to a configurable max return count.
+				6. Subnet: Based on the range of subnet routing will be distributed to users. 
+
+	Pre-requesites: Create 2-App services in different regions.
+			Traffic Manager.
+			Adding Multiple App services to traffic manager. 	
+
+End-Points Types: External End-point - On-primises or Local Environment.
+		  Azure End-point - Cloud Environment .
+		  Nested End-Point - End-point with Multiple routing rules.	
+
+Storage-Account:    Each service will be having unique IP Address - (Blobe Storage: Storage Account-->Container-->Blobs(Block,Append,page)).
+		    Each storage service type of data storing inside the container will be having extension which needs to be selected. 
+
+	Types of Storage Accounts:
+
+		 (Blob): Un-structured Data(Azure Blob storage)- Object storage solution for cloud-Accesisble HTTP/HTTPS
+		 File-share: Sharing files b/w servers.
+		 Queue: where notification data were stored.
+		 Table: Where Structured Data is stored.
+
+	Types of Storage Extensions: 1. Block-Blobs
+			     	     2. Append-Blobs: Resource information stored in Append blobs.
+			             3. Page-Blobs: VHD,Disk information will be stored in page blobs.
+
+	Access Tiers: Azure storage offers various access tiers, which allows storing the blob object data in a very cost-effective manner.
+				1. Hot: frequently accessed data.
+				2. Cool: 30days time peroiod which is for unfrequent accessed data.
+				3. Archive: 180days time period which is used for storing rarely accessed data. 
+
+	Redundant Services (Standard): Local Redundant Storage(LRS) - Drive failures.
+			   	    Geo-Redundant Storage(GRS) - Back-up scenarios.
+							         Data devided into 3 different zones in 2 different regions, each zone is having 2 copies of data will be stored
+							         3 copies in primary region- if any failure other 3 copies for Backup - (Total 6-Copies). 
+			            Zone-Redundant Storage(ZRS) - Protection against data-centre failures- High Availability Scenarios.
+							          Data devided into 3 different zones across same region.
+			            Geo-Zone Redundant Storage(GZRS)- Critical data scenarios.
+
+	Azure-Storage Explorer: In Azure Storage explorer to connect storage account we have 5 ways:
+
+				1. Azure Storage Account.
+				2. Azure Active Directory.
+				3. Connection string.
+				4. SAS: Shared Access Signature.
+				5. Storage Account name and key.
+  
+
+Web-(App-Services Plan):
+			1. Free: Single VM web apps were deployed by multiple users - Its not secured.
+			2. Basic: seperate VM for specific user - secured compared to free 
+			3. Standard: isolated dedicated VM - There is no sharing b/w VM's 
+			4. Premium: Dedicated isolated VM which is more secure.
+			5. Shared: Dedicated isolated VM.
+			6. Isolates: Dedicated h/w,dedicated VM,cost-effective.
+  		
+		Deployment slot
+		Deployment Centre
+		virtual network integration(custom vnet)
+
+Virutal Network Gateway:
+
+	Virtual network gateway is to connect your on-premises network with VNET.
+		Deployment of VNET GW takes sometime
+		A pre-shared key will be generated while creating VNET GW to establish connection.
+		on VNET GW is sufficient for a VNET
+
+Region Pairs:
+
+	Azure Datacenters were designed in terms of region pair: Azure Pairs up 2 regions together to make their service more resilent.
+								 when you use Azure Site Recovery a region In region pair will be used as DR site
+							         During planned data center maintenance or updates.
+	Azure underlying hardware completly runs on "Hyper-v" which they designed specific advanced version that supports Entire Azure cloud infra maintanance.
+
+
+Azure DevOps Pipelines and Azure DevOps Deployment Groups 
+
+Azure DevOps Pipelines and Azure DevOps Deployment Groups are both features of the Azure DevOps platform that help with deploying applications to multiple environments. However, there are some key differences between the two.
+
+Azure DevOps Pipelines is a continuous integration and continuous delivery (CI/CD) service that allows you to build, test, and deploy your applications automatically. 
+It provides a visual interface for building and deploying your application pipelines, which are composed of stages and jobs.
+Each job in a pipeline runs on a single agent or agent pool, and can include tasks that perform build, test, and deployment activities. 
+Pipelines can be triggered automatically or manually, and can run on Azure-hosted agents or on-premises agents that you set up yourself.
+
+Azure DevOps Deployment Groups, on the other hand, are a feature of Azure DevOps that allows you to manage the deployment of applications to multiple machines.
+A deployment group is a logical set of machines with the same configuration that you define in the Azure DevOps portal.
+We can then deploy your application to all the machines in the deployment group using a single deployment task in your pipeline. 
+Deployment groups are typically used to manage the deployment of applications to on-premises machines or to virtual machines in a cloud environment.
+
+In summary, while Azure DevOps Pipelines is primarily focused on building and deploying applications, 
+Azure DevOps Deployment Groups are focused on managing the deployment of applications to multiple machines. 
+Pipelines are used to automate the entire build, test, and deployment process, 
+while deployment groups are used to manage the deployment of applications to specific groups of machines.

@@ -1,0 +1,144 @@
+Azure-Devops Pipelines - Build and Push Docker image to ACR:
+
+	 Release Pipelines: When we have multiple environments we just build once deploy into multiple environments.
+ 
+Review Pipeline Code:
+
+	trigger, resources, variables, Agent(vmImageName) stages->jobs->steps->tasks (or) scripts
+	jobs: Every job will run on image, multiple jobs can create under jobs.
+	      
+
+	trigger:
+	- master
+	
+	resources:
+	- repo: self
+
+	variables:
+	 # Container registry service connection established during pipeline creation
+	dockerRegistryServiceConnection: '4ee05316-45b2-4c65-9574-a13237e77eb4'
+	imageRepository: 'app1/app1nginx'
+	containerRegistry: 'aksdevopsacr.azurecr.io'
+	dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+	tag: '$(Build.BuildId)'
+
+	#Agent VM image name
+	vmImageName: 'ubuntu-latest'
+	
+	stages:
+	- stage: Build
+	  displayName: Build and push stage
+	  jobs:
+	  - job: Build
+	    displayName: Build
+	    pool:
+	      vmImage: $(vmImageName)
+	    steps:
+	    - task: Docker@2
+	      displayName: Build and push an image to container registry
+	      inputs:
+	        command: buildAndPush
+		repository: $(imageRepository)
+		dockerfile: $(dockerfilePath)
+		containerRegistry: $(dockerRegistryServiceConnection)
+		tags:
+		  $(tag)
+
+ Build and Push Docker image to ACR & Deploy to AKS:
+
+	Stage-1: Build and Push to ACR
+	Stage-2: Deploy to AKS
+
+	Steps:	
+		1. As developer will makes some changes into the application code and pushed into github repository.
+		2. As code is located in master branch of github so that particular branch will automatically triggered by build pipeline
+			(It will start building container image)
+		3. Push that container image to ACR - Azure container Registry.
+		4. Deploy stage will starts, Container running in ACR will be deployed into AKS Cluster.
+		5. POD and its related service gets deployed in AKS Cluster from ACR 
+		6. During deployment ACR will pull the latest image based on the build id or namespace present in the registry.
+		7. Publish the Build or pipeline artifacts, Those artifacts will be available for build and release pipelines.
+		6. The Published artifacts will gets downloaded in deploy stage.
+
+	Note: K8s Namspaces are Environment based so service connection should be created between our Azure portal related aks cluster and
+		 its namespace related environment from azure devops.
+		(Namspace specification is must which is almost environment specification like dev, qa, stage, prod) 
+
+Review Pipeline Code:
+
+ 
++	
+	trigger:
+	- master
+	
+	resources:
+	- repo: self
+
+	variables:
+	 # Container registry service connection established during pipeline creation
+	dockerRegistryServiceConnection: '4ee05316-45b2-4c65-9574-a13237e77eb4'
+	imageRepository: 'app1/app1nginx'
+	containerRegistry: 'aksdevopsacr.azurecr.io'
+	dockerfilePath: '**/Dockerfile'
+	tag: '$(Build.BuildId)'
+	imagePullSecret: 'aksdevopsacr21364011-auth'
+
+	#Agent VM image name
+	vmImageName: 'ubuntu-latest'
+	
+	stages:
+	- stage: Build
+	  displayName: Build stage
+	  jobs:
+	  - job: Build
+	    displayName: Build
+	    pool:
+	      vmImage: $(vmImageName)
+	    steps:
+	    - task: Docker@2
+	      displayName: Build and push an image to container registry
+	      inputs:
+	        command: buildAndPush
+		repository: $(imageRepository)
+		dockerfile: $(dockerfilePath)
+		containerRegistry: $(dockerRegistryServiceConnection)
+		tags: |
+		  $(tag)
+	    - upload: manifests
+	      artifacts: manifests
+
+	- stage: deploy
+	  displayName: Deploy stage
+	  dependsOn: Build
+
+	  jobs:
+	  - deployment: Deploy
+	    displayName: Deploy
+	    pool:
+	      vmImage: $(vmImageName)
+	    environment: 'stacksimplifyazuredevopsgithubacraksapp1.default'
+	    strategy:
+	      runOnce:
+		deploy:
+		  steps:
+		  - task: kuberenetesManifest@0
+		    displayname: Create imagePullSecret
+		    inputs:
+		      action: createSecret
+		      secretName: $(imagePullSecret)
+		      dockerRegistryEndpoints: $(dockerRegistryServiceConnection)
+		  - task: kuberenetesManifest@0
+		    displayname: Create imagePullSecret
+		    inputs:
+		      action: deploy
+		      manifests: |
+			$(Pipleine.workspace)/manifests/deployment.yml
+			$(Pipleine.workspace)/manifests/service.yml
+		      imagePullSecrets: |
+			$(imagePullSecret)
+		      containers: |
+			$(containerRegistry)/$(imageRepository):$(tag)
+		
+	
+	
+	

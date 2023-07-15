@@ -1,0 +1,423 @@
+1. Kubernetes Takes Care of:
+
+	1. Automatic deployment of the containerized applications across different servers.
+	2. Distribution of the load across multiple servers.
+	3. Auto-scaling of the deployed applications.
+	4. Monitoring and health check of the containers.
+	5. Replacement of the failed containers.
+	6. Kuberenetes Supported to various Container Runtimes: Docker, CRI-O, containerd.
+		
+2. POD: 
+
+	1. Is the smallest unit in the kubernetes world, Its just an abstraction or another layer on top of container.
+     	2. Containers are created inside the pod.
+	3. POD Anatomy:
+		Inside of the POD Sigle container or several containers also they will be sharing volumes
+		and IP address, This is means that all containers inside the pod share volumes and IP Addresses.
+	4. Most common scenario of course is to have a single container per pod.
+	5. One port one server, Each port must be located on the same server 
+	6. It is not possible to spread the containers from one port across different servers
+	   in the kubernetes cluster
+	7. But sometimes when the containers have to be tightened together and then heavily depend on each other.
+	   and then could exist in the same namespace, it is possible to create several containers in the same pod.
+	8. Pods can be created,removed,could be moved from one node to another node.
+	9. Usually one application per pod, Each Pod gets its own IP address, New IP address will be generated on re-creation of pod.
+	10. Pod is a smallest or least level object which can be created on top of containers in kubernetes, Through pods applications will be deployed.
+	11. Pods can only be having Ip-Address and deployed in master node where as containers will not be having Ip-address.
+	     Docker: Image-->container(Container is having IP-address in docker).
+	12. Containers that are inside the pod will be sharing resources over port no's.
+	     (because containers are nothing but applications obviously applications will be having port no's)
+	13. Docker perspective containers will be auto-scaled where as in kubernetes pods will be autoscaled.
+	     (during pod autoscaling multiple containers will not be created in a single pod.
+	      instead of that new pod will be created container will be autoscaled in new seperate pod.
+	      pods will be scaling rather than containers inside the pod).            
+	14. Limitations: Pod Ip Addresses are dynamic which is not fixed if a pod is deleted new pod will be having other ip address. - SVC(Services - static Ip)
+			 container data which is available in pod is non-persistant. - PV/PVC - (Data consistency)
+			 If a pod is deleted application will be unavailable. - Controller - (Automatically pods will be created)
+	15. Pod can have multiple containers - multiple Containers should not be run in a same ports.
+	   	pod can have resources - how much memory or CPU's should be there? - Containers will share the resourceses of pod.
+	   	pod will not be created with a same name.
+	16. Static Pods: Directly managed by kubelet rather than API-server
+    			 Pod will be restarted or recreated in a Specified path managed by kubelet.
+			 Mirror Pod: When a kubelet creates a static pod It will automatically creates a mirror pod to represent the static pod in kubernetes api-server.
+			 changes will not be made into static pods from mirror pod.
+			 static pods are always bound to one kubelet on specific node.
+			 The pod names will be suffixed with the node hostname with a leading hyphen.
+
+3. Ingress: 1. route traffic into cluster - request from browser to ingress - [Ex: K8s Ngnix Ingress Controller]
+	       ingress will be having routing rules which define main address or all requests to that host must be forwarded to an internal service.
+			Forward request to the internal service,incoming Request gets forwarded to internal service.
+		Ingress is an advanced load balancer which provides context path based routing, SSL, SSL Redirect etc 
+			(ex: AWS ALB- Application load balancer)
+		It has all the http based features available 
+	    
+	    2. ingress-controller: which is basically another pod or set of pods that run on our node in k8s cluster.
+				   implements ingress and evaluates and processes ingress rules.
+				   The main function of ingress controller is to evaluate the rules that we defined in our cluster.
+				   This way to manage all the redirections.
+				   Its an entrypoint to cluster for all the requests to the domain or subdomain rules that we have configured.
+				   once we installed ingresss controller we are good to go create the ingress rules and whole configuration is going to work.
+				   Setting up the whole cluster to be able to receive external requests.
+				   minikube addons enable ingress -ingress was successfully enabled
+
+	    3. Most common Configuration: 
+			  A cloud load balancer that is specifically implemented by some cloud provider like AWS Or Azure
+			  External requests coming from the browser will first hit the load-balancer and
+			  the load-balancer will re-direct the request to Ingress controller.
+
+	    4. External Proxy server: which is of s/w or h/w solution that will take a request of loadbalancer in an entrypoint of our cluster.
+				      Its a seperate server with public IP address and open ports for external requests to be accepted.
+				      proxy server will acts as an entry point to our cluster.
+				      This is the only server can accessisble externally none of the servers in our k8s cluster will have publicly 
+				      accessisble IP address which is obviously a very good security practice.  
+				      All the requests will enter the proxy server and proxy server will redirect the request to ingress controller
+				      ingress controller will then decide which ingress rule applies to that specific request
+				      then whole internal request forwading will happen.
+
+	    5. use-cases:
+
+		1. Multiple paths for same dns host:
+			Forwarding with one ingress of the same dns to multiple applications using multiple path specification in ingress under host dns.		
+		2. Multiple sub-domains or domains: 
+			Multiple hosts with one path, each host represents a subdomain.	
+
+4. Services: Using service we should expose external port for our deployment as our deployment internally 
+	     will be proxy to specific port, by exposing port the service will be created.
+	     Service is basically a static IP address or permanent IP address that can be attached each pod.
+	     Life cycle of pod and service are not connected so if pod gets down the service and its IP address
+	     will be constant same static ip address will be assigned to new pod which is about to create.
+	     Internal service: Which basically means that no external requests are allowed to the pod only
+		components inside the same cluster can communicate it.
+	     External services: will allow external service to Communicate with the Pod.	
+	1. Expose the ports for our deployment using 
+		1. kubectl expose deployment nginx-deployment --port=8080 --target-port=80
+		2. kubectl get services or kubectl get SVC- to check wheather the port is exposed or not.
+		3. kubectl describe service deployment name.
+		4. kubectl delete service deployment name.
+	2. ClusterIP: 
+		1. will creates single IP address which could be used in order to connect any
+		   of pods only from inside of the k8s cluster.
+		2. Cluster IP allows us to connect to specific deployment and its pods
+		   only from inside of the k8s cluster.	
+		3. Some of the private deployments like database deployments which are inaccessisble for connecting them 
+		   from outside, for those deployments using Cluster IP service will be able to connect to those specific private
+		   deployments inside the cluster which are able to connect those pods externally. 
+		4. Cluster IP address will only available inside of our k8s cluster, We can access cluster IP from any node.
+		5. Cluster IP is just single IP which was created as a service for particular deployment.	
+		   and we could utilize just single IP in order to connect any of the pods.
+			behind the scenes k8s will do all proxying of the request to particular selected pod and it balances a load
+			across different pods in the deployment.
+			Using cluster IP our deployment will be exposed.
+		6. Cluster IP only accessisble within cluster.
+	3. Every Application which is running on the specific node will be having a replica or clone of same
+	   Application would run which will also be connected to the service 
+	4. Here a service is connected to original application node and replica or clone of our application node
+	   service will be having persistant static IP address with a DNS name so that we dont have to constantly
+	   adjust the endpoint when a pod dies. 
+	5. Load-blancer: 
+		primarily for cloud providers to integrate with their Load Balancer services (Ex: Elastic Load Balancer).
+		service will also be a load balancer which means that the service will actually catch the request and forward
+		it to whichever pod is busy.
+		Becomes accessible externally through cloud providers LoadBalancer.
+		If one of the replicas of our application pod would die the service will forward the requests to another one
+		so that our application would still be available and accessible by user with out downtime.
+		Whenever we created a loadbalancer service, NodePort and ClusterIP service are created automatically by k8s cluster to which
+		the external load balancer of the cloud platform will route the traffic too.
+		Routing order: Pod(Internally)<---ClusterIP(Internally)<-----NodePort(Internally)<-----LoadBalancer(Externally).
+		LoadBalancer Service is an extension of NodePort Service.
+		NodePort Service is an extension of ClusterIP Service.
+	6. NodePort: Used for accessing applications outside of the k8s cluster through worker node ports.
+			NodePort Service is an extension of ClusterIP Service. 
+		(Ex: Accessing Frontend application on browser through IP address of a worker node and NodePort).
+		     External traffic has access to fixed port on each worker node. 
+			[NodePort will be having pre-defined Port Range value between: 30000 - 32767]
+		When we create NodePort service, ClusterIP Service route to that particular NodePort service will be automatically created.
+	7. externalName: To access externally hosted apps in k8s cluster 
+		(Ex:  Access AWS RDS Database endpoint by application present inside k8s cluster).		
+	8. Headless-services:   Client wants to communicate with 1 specific Pod directly
+				Pods want to talk directly with specific Pod
+				So, not randomy selected, Use Case: Stateful applications, like databases
+				DNS Lookup for Service: returns single IP address (ClusterIP)
+				Set ClusterIP to "None" - returns Pod IP address instead
+				No cluster IP address is assigned. 
+5. Replicaset: 
+
+	Replica set actually manages all pods related to deployment
+	It is a set of replicas of our application, because we could create multiple pods in the
+	same deployment, and all of them are included in the replica set. 
+
+6. Deployments: Using deployments we can create multiple pods, application can be replicated by deployment. 
+
+	1. It is not convenient to create seperate pods inside of the k8s cluster.
+	   because we are not able to scale and increase quantity of the pods.
+	2. Deployment is The Most common way to create multiple pods, where we are able to increase or decreases the quantity of pods
+	   modify configuration. 
+	3. Deployment will be responsible for creation of actual pods
+	   Note: All pods inside the deployment will be the same
+	4. We can create multiple copies of the same pod and distribute load across
+	   different nodes in the k8s cluster.
+	5. Selector:   
+		  1. Selectors are used in order to connect pods with deployments
+		     because in k8s pods and deployments are seperate objects
+		     and we have to know how to assign specific pods to particular deployments
+		     and hear we see selector
+	6. Scale up & down,deleting,decribing pods in deployment:
+		 kubctl scale deployment nginx-deployment --replicas=5
+		 kubectl delete deployment nginx-deployment
+		 kubectl describe deployment nginx-deployment.
+
+7. Statefulset: will replicates the databases which are connected to applications.
+   how the database pod can be replicated? will database can be replicated along with application pod?
+	1. If database pod is down automatically application also wouldn't be accessible.
+	   so database replica must be done we as well.
+	2. An Application can be replicated by deployment, but the databases which are connected to applications
+	   will be not be replicated with deployment.
+		reason: because database has a state which is its data means that if we have clones or replicas
+			of the data they would all need to access the same shared data storage and that would
+			need some kind of mechanism that manages which pods are currently writing or reading from 
+			that storage.
+			if we use deployments there would be data inconsistency.
+			To avoid such data inconsistancies and that mechanism in addition to replicating feature is
+			offered by another kubernetes component statefulset.
+	3. Elastic search, mongoDB, MySQL or any other statefull applications or databases should be created using
+	   stateful sets and not by deployments
+	4. Statefulset just like deployment would take care of replicating database pods which are connected to the
+	   application pods and scaling the database pods up or down and make sure the database reads and writes are
+	   synchronized so that no database inconsistencies are offered.
+					
+8. ConfigMap: is basically an external configuration to our application.
+
+	config map would usually contain configuration data like URL's of database or some other services
+	the we use and in kubernetes we just connect it to the pod so that pod actually gets the data that
+	configmap contains and now if we change the name of the service the endpoint of the service we just
+	adjust the config and thats it we don't have to build a new image and have to go through the whole 
+	cycle.
+
+9. Secret: Its just like config map but the difference is used to store the secret data like credentials of
+	    different users which are save in the database
+	    In secrets the credential information were stored in most secured base64 encoded format.
+	Note: config map should connect it to our pod, so that pod can actually see those data and read from 
+	      the secret we can actually use the data from config map or secret inside of our application pod
+	      using environment variables or even as a properties file. 
+
+10. Kubernetes Architecture:
+
+	Add new Master/Node Server:
+		1. get a new baremetal server.
+		2. install all the master/worker node processess.
+		3. add it to the cluster.
+	Cluster setup:
+		Multiple master and worker nodes - (2 Master Nodes, 4 Worker Nodes).
+		Seperate virtual or physical machines.  
+	
+	1. Kubernetes Cluster: 
+		
+		1. Master Node: Which manages or controls the cluster state and multiple worker nodes.
+				less load of work so they need less resources 
+			1. Pod scheduling,Monitoring of pods,re-scheduling/re-starting pods,adding nodes to cluster. 
+			2. Services: Kube API Server, Kube-scheduler, Kube-control manager
+					  cloud controller manager,ETCD-database(key-value pair), DNS.
+			3. Kube API Server: 
+				1. Its a central point of communication between master and worker nodes.
+				2. It is a cluster gateway which actually manage actual kubernetes cluster using 
+				   kubeCTL client Tool.
+			4. Kube-Scheduler: 
+				1. Inorder to start the pod by randomly assigning into any one of the worker nodes.
+				2. It just decides which specific worker node should the pod will be scheduled.
+				3. It checks how much resources requires for the pod that you want to schedule like
+				   how much CPU,RAM and its going to go through the worker nodes and see the available
+				   resources on each one of them and passes the status of request to kubelet.
+				4. Kubelet will receives the output from kube-scheduler and executes the request.
+	 		5. kube-controller manager: detects cluster state changes
+				1. When pods down or crashed in the node kube controller will detects those nodes
+				   and recover the cluster state by rescheduling those pods asap.
+				2. For that it makes a request to the scheduler to reschedule those dead or crashed 
+				   pods in the node, in this cycle scheduler decides based on resource calucation of
+				   which worker nodes should restart those pods again and makes requests to kubelet on
+				   those worker nodes to actually restart the pods.
+			6. etcd: Its a cluster brain cluster changes get stored in key-value database.
+				1. Every change in the cluster will be saved into etcd database
+				2. change is like creation of new pod,pod crashes all those changes
+				   saved into this database. 
+				3. There will multiple master nodes in real API server is load balanced and 
+			           etcd database storage forms a distributed storage across all the master nodes.
+
+		2. Worker Node: where pods are actually deployed.
+				More load of work so they need less resources 
+		   	1. Each node is having multiple pods with containers running on it.
+			2. The way in which creating pods along with containers using 3 components Or Processes: 
+				kubelet, kube-proxy, container runtime which are must be installed on every node
+				that are used to schedule and manage those pods.
+			3. container runtime: 
+				Application pods have containers running inside a container runtime needs to be
+				installed on every node.
+			4. Kubelet: 
+				Which will be actually processing of scheduling pods and the containers.
+				It interacts with both the container and node
+				kubelet starts the pod with a container inside and assigning resources from the node
+				to container like CPU RAM and storage resources
+			5. Kubernetes cluster is made up of multiples nodes which also must have container run time 
+			   and kubelet services installed, we can have a hundreds of those worker nodes	which will
+			   run other pods,containers and replicas of the existing pods.
+			6. The pods will be communicated through services which a sort of load balancer that basically
+			   catches the request directed to the pod or the application.
+			7. kube-proxy: 
+				which is responsible for forwarding requests from services to pods
+				It actually having intelligent forwarding logic inside makes sure 
+				the communication works in a performant way with low overhead.
+				It randomly forwarding the request to any replica node from existing pod
+				It avoids the network overhead of sending the request to other nodes. 
+
+	3. Components of kubernetes Master Node: Controller Plane
+
+		1. Kube-controller manager: It checks and creates a pod automatically if any pod gets down. 
+		2. kube-api-server: It creates the configurations for pods, Writes the requests into etcd database and 
+		 	    request inforamtion over kube-sheduler about how pods needs to be configured into nodes.
+			    without communicating with api-server we cant do anything in kubernetes.
+		3. etcd-Backup: Its a data-store (Backend Database) - (Key:value-pair database)
+			It consists of complete details of a cluster.
+			How many pods are there in nodes?,How many configurations are there? - Every information present in etcd data store.
+			If in case there is a failure or crashing of our cluster, should backup the etcd
+		4. kube-scheduler: It communicates with kube-api-server which created a configuration set up of pods and 
+			   It allocates pods into kubernetes nodes and gives confirmation of pode-node setup to kube-api-server.
+			   kube-scheduler checks the load capacity of nodes then it fixes which node can manage the load of pods and decides which pod should run on which node.
+			  (kube-scheduler will never deploy pods into nodes, It just allocates pods to node).
+			   Schedular will be selecting best suitable node for a pod to be running on cluster 
+
+	4. Components of kubernetes Worker Node: Data Plane
+
+		1. Kubernetes Nodes-kubelet (Its an agent)
+	    		(Pods will run in kubernetes nodes)
+	  	2. Kubelet: It is a service or software which always communicate with kube-api-server and requests wheather any pods are avaialble
+				 which are going to be deployed into nodes
+	   		(Each kubernetes node will be having a kubelet service for deploying pods into node, Communication between worker and master node 
+				can be done only through Kubelet agent).
+	   		Kubelet doesn't manage containers which were not created by kubernetes.
+	  		It just checks how many containers are running & monitors the process of containers and pods creation as well.
+	  		It collects information about our worker node and communicates with kube-api-server. 
+	   		At the same time it is responsible for Execution of our worker node,creation of containers during runtime,deployment of our application.
+			(Kubelet will communicates with docker(CRT) and get container requirement which is mentioned over manifest file from master node).
+	   	3. Container-Run time: Ex: Docker,Container-Daemon(wrapper),Rocket - kubelet will not create pod directly .
+		4. Kube-proxy: Opens the ports in all nodes of a cluster automatically and maintains network rules on nodes,It allows network communication to pods from network sessions in and outside of our cluster.
+	    	       Its a service runs on each node of a cluster. 
+	    	       kube-proxy service is responsible for each and every pod should connect to container.		       
+		5. Container network interface plugins: wavenet,calico,Flannel - (Virtual Cluster Network (creates a virtuL network across the whole cluster) - K8s implements n/wing b/w pods (and services)).	   
+
+	5. Communication between master and worker node:
+		
+		1. Admin will provide pod requirement to kubectl.
+		2. kubectl-->kube-api-server(kube-api-server-->(etcd & scheduler))-->kubectl 
+		3. kubectl frist communicate with kube-api-server.
+		4. As soon as a request received from kubectl, kube-api-server first communicate with etcd cluster about the request.
+		5. etcd:  whole information of node,pod configuration of a cluster present in etcd.
+		6. kube-api-server will collect the cluster information from etcd and pass cluster info to kube-scheduler.
+		7. kube-scheduler will accept request from kube-api-server and reply back kube-api-server 
+		   by choosing an alogorithm and assigns the relevant best pod to relavent node.
+		8. kube-api-server which collected info from kube-scheduler will communicate with kublet of particular node .
+                9. kubelet of particular node will communicate with container runtime as per request from kube-api-server.
+		10. Container runtime will create a container as per request from kubelet on top of that pod will be created by kubelet. 
+		11. kubelet will create a pod on top of container and reply back to kube-api-server.
+		12. kube-api-server will communicate with etcd and send request regarding pod information, etcd will update pod info into its database.
+
+	6. Graphical information regarding Communication between master and worker node:
+
+		1. kubectl apply.
+		2. kube-api-server --> etcd.
+		3. etcd --> kube-api-server.
+		4. kube-api-server --> scheduler.
+		5. scheduler (algorithm).
+		6. scheduler (algorithm) --> kube-api-server. 
+		7. kube-api-server --> kubelet
+		8. kubelet --> CRT(Container run time)-docker.
+		9. CRT Will creates container (docker run). 
+		10. kubelet wrap (pod) - As there are different container run times so for kubernetes pod is single notation created by kubectl for any container run time.
+		11. kubelet --> kube-api-server - (which gives conformation regarding succesfull pod creation in a particular node).
+		12. kube-api-server --> etcd 
+ 
+
+11. Namespaces:	kubectl get namespace
+	1. In K8S cluster we can organize resources in namespaces, so we can have multiple namespaces in a
+		cluster
+	2. Its like a virtual cluster inside a k8s cluster.
+	3. During creating a cluster, K8s by default will give 4 Namespaces:
+
+		1. k8s-dashboard namespace: This namespace is specific to minikube installation will be done in .
+		2. kube-system: The components that are deployed in the namespace are the system process
+				They are from Master managing processes - Master & kubectl processes.
+		3. kube-public: It contains publicly accessisble data, it has a config map that contains cluster
+				information which is accessible even without authentication.
+		4. kube-node-lease: which is actually a recent addition to k8s purpose of this namespace is
+				    that is holds information about the heartbeats of nodes.
+				    each node has associated lease object in namespace. 
+					determines the availability of a node -
+				 [kubectl create namespace namespace-name, kubectl get namespace]	
+
+		5. Use cases:
+   
+			1. Structure our components.
+			2. Avoid conflicts between the teams.
+			3. Share services between different environments,different deployments.
+			4. Access and resource limits on Namespace level.
+
+		6. Limitation of using namespace:
+
+			1. You can't access most resources from another namespaces.
+			2. Access service in another namespace.
+			3. Components which can't be created within a namespace.
+			  	like globally in a cluster - persistant volume, node
+				we can't isolate them - 
+			4. List the components that are not bound to namespace using - kubectl api-resources --namespaced=false
+			5. List the components that are bound to namespace using - kubectl api-resources --namespaced=true
+
+8. Advanced-scheduling in kubernetes: different ways of scheduling a pod on a node.
+	1. Node should have edequate hardware resources.
+	2. Pod should have matching label.
+	3. If the pod is requesting any port, is the port available on that node.
+	4. Advanced-scheduled mechanisms: Our pod will be deployed in a specified worker node according to our choice as per below criteria - (manual pod scheduling into node ).	
+						1. Node name: node name should mention in yaml file, otherwise scheduler came into picture and will take the responsibility of deploying pod into particular node.
+							      node name should always mention in terms of pod specification.
+							      "nodeName" is a keyword which is used to give name of node by mentioning under pod spec. 
+						2. Node selector
+						3. pod affinity/Anti affinity   
+						4. node affinity/Anti affinity
+						5. Taints and tolerations
+			
+9. Summary:
+
+	1. Kubernetes cluster --> Nodes --> Pods -->(Image ->containers)
+	2. Pods can communicate each other using service(ex: Cluster IP - static IP)
+	3. Inside of the pods kubernetes creates a container.
+	4. In order to create container it has to pull image from docker hub.
+		ex: nginx image was pulled and new container was created based on that image.
+	5. Container: Is the smallest unit in the docker world. 
+	6. Kubernetes Objects: POD, Service, Ingress, Volumes, Secrets, StatefulSet, ConfigMap, Deployment.
+
+		1. Node is actually server either bare-matel or virtual server.
+		2. We should include multiple site servers into kubernetes cluster they would be located in
+	   	   different data centers in different parts of the world.
+		3. But usually nodes which are belongs to same kubernetes cluster are located close to each other
+	   	   in order to perform all jobs more efficiently.
+		4. Inside of the nodes pods will be there, inside of each pod there are containers usually single 
+	           container per port. 
+ 		5. Pods are created on different nodes and all of that is done by kuberentes automatically for us
+		6. Our job is to create nodes and cluster based on those nodes.
+		7. After creating such intial configuration by us, Kuberentes will automatically deploy pods on
+	           different nodes.
+		8. There are 2 types of nodes in kubernetes architecture: default services run on both nodes are
+					kubelet, kube-proxy, container runtime.
+
+	
+	7. Containers: Operating system-->Container Engine-->Container-(App-->Dependencies).
+	8. Virtual Machines: Operating system-->Hypervisor-->Operating system-->(App-->Dependencies).
+	9. Kubernetes is an orchestration of Containers,containeraized workloads.
+	10. Google developed Google Borg which is uesd as an internal application to run applications and its handed over to - (Cloud Native computing foundation).'
+	11. Kubernetes,Docker swam,EKS(Amazon),GKE(Google Cloud platform-GCP),AKS(Azure) - Scaling,Deployment,Deployment.
+	12. Kubernetes host the applications that are being containerized in a automated way.
+	13. Kubernetes may have one or more master nodes - (Monitoring & Managing nodes) or worker nodes - (Containers & Application hosting will takes place in worker nodes).
+	14. Master Node will take manifest or yaml file (which consists of Containers & Application requirement) it will excute it on worker nodes. 
+	15. K8s is a tool for automated management of containarized applications, also known as containarized orchestration tool.
+   		goal: automate our application infrastructure and make it easy to manage, It will automate deployment,scaling.
+   		K8s will supports upto 5k nodes, where as swam will support upto 20 nodes.
+	16. Bootstrapping cluster: Initialize the cluster on the kube master server.
+	17. Deployments are the great way to automate the management of our pods. It allows us to specify a desired state for a set of pods ex: scaling,rolling updates,self-healing.
+	18. K8s Services: services are another important component of deploying apps with kubernetes.

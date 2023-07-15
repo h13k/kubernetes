@@ -1,0 +1,71 @@
+Pull Docker Images from ACR using Service Principle and Run on Azure AKS Nodepools - (Worker-Nodes-VMSS).
+
+Azure AKS Pull ACR using Service Principal:
+	1. Pull Docker Images from Azure Container Registry using Service Principal to Azure AKS Node pools.
+	2. Build Docker Image from local docker on our desktop.
+	3. Push our local docker image to Azure ACR.
+	4. Create a "Service Principle" and using that create Kubernetes Secret.
+	5. Using k8s Secret associated to pod specification, pull the docker image from ACR and schedule on Azure AKS NodePools.
+
+Create "Service Principle": 
+
+	Script: Will generates Service Principle ID and Password 
+		ACR_NAME=acrdemo2ss
+		SERVICE_PRINCIPAL_NAME=acr-sp-demo
+		ACR_REGISTRY_ID=$(az acr show --name $ACR_NAME -query id --output tsv)
+		SP_PASSWD=$(az ad sp create-for-rbac --name http://$SERVICE_PRINCIPAL_NAME --scopes $ACR_REGISTRY_ID --role acrpull --query password --output tsv)
+		SPP_APP_ID=$(az ad sp show --id http://$SERVICE_PRINCIPAL_NAME --query appId --output tsv)
+		echo "Service principal ID: $SP_APP_ID"
+		echo "Service principal password: $SP_PASSWD"
+
+Create Image Pull Secret:
+
+	kubectl create secret docker-registry acrdemo2ss-secret \
+	    --namespace default \
+	    --docker-server=acrdemo2ss.azurecr.io \
+	    --docker-username=80baecfe-7176-4ff5-ad22-db15528a9a8 \
+	    --docker-password=0zjUzGzSx3_.xi1SC40VcWkdVyl8Ml8QNj
+
+	Deployment Manifest File:
+	
+	apiVersion: v1
+	kind: deployment
+	metadata:
+	  name: acrdemo2ss-deployment
+	  labels:
+	    app: acrdemo2ss
+	spec:
+	  replicas: 1
+	  selector:
+	    matchlabels:
+	      app: acrdemo2ss
+	template:
+	  metadata:
+	    labels:
+	      app: acrdemo2ss
+	  spec:
+	    containers:
+	      - name: acrdemo2ss
+		image: acrdemo2ss.azurecr.io/app2/acr-app2:v1 
+		imagePullPolicy: Always
+		ports:
+		  - containerPort: 80
+	    imagePullSecrets:  # Update Image Pull Secret Name we created
+	      - name: acrdemo2ss-secret
+
+	---
+
+	apiVersion: v1
+	kind: service
+	metadata:
+	  name: acrdemo2ss-loadbalancer-service
+	  labels:
+	    app: acrdemo2ss
+	spec:
+	  type: LoadBalancer
+	  selector:
+	    app: acrdemo2ss
+	  ports:
+	    - port: 80
+	      targetPort: 80
+	  

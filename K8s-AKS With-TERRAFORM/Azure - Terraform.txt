@@ -1,0 +1,46 @@
+1. Terraform supports a number of different methods for Authenticating to Azure:
+
+	1. Authenticating to Azure Using the Azure CLI		
+	2. Authenticating to Azure using Managed service identity - (MSI)
+	3. Authenticating to Azure using a Service Principle and a client Certificate.
+	4. Authenticating to Azure using a Service Principle and a Client Secret.
+
+2. Terraform files (or) Commands:
+
+	terraform.tfstate: If this file is lost, whole infrastructure which is created for our application will be destroyed.
+			   This file should be safe, this is the database for terraform commands what we are executing.
+			   It is the storage for executing terraform commands to maintain the state of our infrastructure.
+	terraform plan: which resource added to the list which is about to create its not persistant
+			to be persistant should use -out 
+			terraform plan -out name of file, Its like a blueprint for resource which is about to create.
+			It will keep on verifies our desired state of local terraform manifest file with current or real state.
+			If changes made into real state, It will show those changes but will not get persisted into tfstate file.   
+	terraform validate: which validates the plan before applying resources, if plan is correct we can apply if not it will generate the errors.
+	terraform apply: as per the terraform plan terraform will create the resource.
+			 terraform.tfstate file will be created when terraform apply command applied.
+	terraform refresh: update local state file against real resources in cloud.
+			   refresh, plan make a decision apply.
+			   If any manual changes were applied in real state, refresh will automatically updates and those changes will be in sync with 
+			   desired state of our terraform local manifest file
+			   so that if we can accept those changes go through with refresh,plan or else just apply so that manual change will not be applied it got
+			   destroyed.
+	terraform show: Inspect terraform state or plan
+	terraform providers: prints a tree of the providers used in the configuration.
+	states of terraform:
+		desired state: resources which are declared in terraform file "main.tf" can be in a "desired state".
+		real or current state: What is present inside the cloud that is real or current state.
+					real resources present in our cloud.
+	Note: state file will be in a Json format, where as terraform manifest file will be in a Hashicorp language format.
+			 
+3. Create a Azure Resource Group:
+
+	resource "azurerm_resource_group" "aks-rg2" {
+	  name	= "aks-rg2-tf"
+	  location = "Central US"
+	  tags = {
+	    "environment" = "k8sdev"
+	  }
+	}
+
+	
+	

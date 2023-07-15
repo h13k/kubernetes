@@ -1,0 +1,51 @@
+Context Path Based Routing: Azure AKS & Nginx Ingress
+
+	Azure Portal (public IP for Ingress Controller - Azure Standard Load Balancer)---> AKS Cluster ---> (3 Ngnix pods) <---- (Ingress service <-- Ingress Controller) <--- End User
+
+	Ingress Service file: Context Path-Based Routing (CPR)
+
+	apiversion: networking.k8s.io/v1
+	kind: Ingress
+	metadata:
+	  name: ingress-cpr
+	  annotations:
+	    kuberenetes.io/ingress.class: "nginx"
+	spec:
+	  defaultBackend:
+	    service:
+	      name: usermgmt-webapp-clusterip-service
+	      Port: 
+		number: 80
+	  rules:
+	  - http:
+	      paths:
+                - path: /app1/
+		  pathType: Prefix
+		  backend: 
+		  service:
+		    name: app1-nginx-clusterip-service
+		    Port: 
+		      number: 80
+	        - path: /app2/
+		  pathType: Prefix
+		  backend: 
+		  service:
+		    name: app2-nginx-clusterip-service
+		    Port: 
+		      number: 80
+
+	usermgmt-webapp-service:
+
+	apiversion: v1
+	kind: service
+	metadata:
+	  name: usermgmt-webapp-clusterip-service
+	  labels:
+	    app: usermgmt-webapp
+	spec:
+	  type: ClusterIP
+	  selector:
+	    app: usermgmt-webapp
+	  ports:
+	    - port: 80
+	      targetPort: 8080 

@@ -1,0 +1,265 @@
+Creating Virtual Nodes in AKS Production Cluster: 
+	
+	1. Introduction:
+		1. Enable Virutal Nodes (Serverless)
+		2. Create Linux User Node Pool
+		3. Create Windows User Node pool
+
+	2. Enable Virtual Nodes on our AKS Cluster
+		Enable Virtual Nodes Add-on on our AKS Cluster.
+		Verify Enviromental Variables:
+			echo ${AKS_CLUSTER}, ${AKS_VNET_SUBNET_VIRTUALNODES}
+		Enable Virtual Nodes on AKS Cluster
+			az aks enable-addons \
+			   --resource-group ${AKS_RESOURCE_GROUP} \
+			   --name ${AKS_CLUSTER} \
+			   --addons virtual-node \
+			   --subnet-name ${AKS_VNET_SUBNET_VIRTUALNODES}
+
+	3. Fix ACI Connector Pod CrashLoopBackOff Issues in kube-system Namespace:
+
+		If a Pod is CrashLoopBackoff state, then Verify Logs of that Pods
+		kubectl get pods -n kube-system 
+		kubectl -n kube-system logs -f $(kubectl get pods -n kube-system | egrep -o 'aci-connector-linux-[A-Za-z0-9-]+')
+			Reason for CrashLoopBackoff error: Authencation failed
+				Subnet which is created for virtual nodes are not mapped with MSI create a role, then deleted the ACI-Connector related Pod and automatically pod will
+				be created in kube-system namespace of masternode or control-plane or systemnode pool which it creates the nodes through aci connector pod.
+	4. Create Linux user node pools and windows user node pools through Azure CLI
+	5. Now we have one master node which is system node pool or control plane related to AKS Cluster which is by default obtained during creation of AKS Cluster
+		also 3 - user node pools:
+			1. Linux user node pools (or) Linux Worker Nodes
+			2. Windows user node pools (or) Windows Worker Nodes
+			3. ACI - user Virutal Nodes (or) ACI Worker Nodes
+	6. Azure AKS Deploy Apps to different Nodepools (or) Worker Nodes Using Node Selectors
+
+		1. Node Selectors-->Worker Nodes - {Azure Linux Node Pools, AKS Windows NodePools, AKS Virutal Nodes(Virutal Kubelet+ACI)}
+		   k8s service CIDR created for k8s services where all the 4 apps should be accessed externally from 4 nodepools (Master & 3-Worker Nodes) 
+		   through Node Selector k8s object. 
+			NodeSelector: schedule pods on different types of nodes 
+
+		2. All the 4 applications which are deployed into 4 node pools will be having 4 load balanced services created under k8s service CIDR Block, so that 4 public-IP's were generated
+		   through those 4 public Ip's application will be accessed successfully.
+
+		3. Whenever user accessed through each of public-ip's of k8s 4 app related services which are deployed under k8s Service CIDR Block All the Four 
+		   application Requests will route through uderlying Azure standard LoadBalancer and then route to service then pod in system node pool,Linux Worker Nodes
+		   Windows Worker Nodes,ACI Worker Nodes. 
+
+		4. Manifest File-1: system-apps is an admin label where application deployed into system node pool or master node 
+				    NodeSelector will refere the admin label and deploy application pod to those system node pools. 
+
+			apiVersion: apps/v1
+			kind: Deployment
+			metadata: 
+			  name: app1-nginx-deployment
+			  labels:
+			    app: app1-nginx
+			spec:
+			  replicas: 1
+			  selector:
+			    matchLabels:
+			      app: app1-nginx
+			template:
+			  metadata:
+			    labels:
+			      app: app1-nginx
+			  spec:
+			    containers:
+			    - name: app1-nginx
+			      image: stacksimplify/kube-nginxapp1:1.0.0
+			      ports:
+			        - containerPort: 80
+			    nodeSelector:
+			      app: system-apps
+
+			---
+
+			apiVersion: v1
+			kind: Service
+			metadata:
+			  name: app1-nginx-clusterip-service
+			  labels:
+			    app: app1-nginx
+			spec:
+			  type: LoadBalancer
+			  selector:
+			    app: app1-nginx
+			  ports:
+			    - port: 80
+			      targetPort: 80
+
+	5. Manifest File-2: java-apps is an admin label where application deployed into linux node pools or worker node 
+		            NodeSelector will refere the admin label and deploy application pod to those worker node pools. 
+
+	   Back-end Manifest:
+
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: mysql
+		spec:
+		  replicas: 1
+		  selector: 
+		    matchLabels:
+		      app: mysql
+		  strategy:
+		    type: Recreate
+		  template: 
+		    metadata:
+		      labels:
+			app: mysql
+		    spec:
+		      containers:
+		      - name: mysql
+			image: mysl:5.6
+			env:
+			  - name: MYSQL_ROOT_PASSWORD
+			    value: dbpassword11
+			ports:
+			  - containerPort: 3306
+			    name: mysql
+			VolumeMounts:
+			  - name: mysl-persistant-storage
+			    mountPath: /var/lib/mysql
+			  - name: usermanagement-dbcreation-script
+			    mountPath: /docker-entrypoint-initdb.d
+		      volumes:
+		        - name: mysql-persistant-storage
+			  persistantVolumeClaim:
+			    claimName: azure-managed-disk-pvc
+		        - name: usermanagement-dbcreation-script
+			  configMap:
+			    name: usermanagement-dbcreation-script
+		      nodeSelector:
+		        app: java-apps
+
+		---
+
+	Front-end manifest file:
+
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: usermgmt-webapp
+		  labels:
+		    app: usermgmt-webapp
+		spec: 
+		  replicas: 1
+		  selector:
+		    matchLabels:
+		      app: usermgmt-webapp
+		  template:
+		    metadata:
+		      labels:
+			app: usermgmt-webapp
+		    spec:
+		      initContainers:
+		        - name: init-db
+			  image: busybox:1.31
+			  command: ['sh', '-c', 'echo -e "checking for the availability"']
+		      containers:
+			- name: usermgmt-webapp
+			  image: stacksimplify/kube-usermgmt-webapp:1.0.0-MySQLDB
+			  imagePullPolicy: Always
+			  ports:
+			    - containerPort: 8080
+			  env:
+			    - name: DB_HOSTNAME
+			      value: "mysl"
+			    - name: DB_PORT
+			      value: "3306"
+			    - name: DB_NAME
+			      value: "webappdb"
+			    - name: DB_USERNAME
+			      value: "root" 
+			    - name: DB_PASSWORD
+			      value: "dbpassword11"
+		      nodeSelector:
+			app: java-apps
+
+	---
+
+	apiVersion: storage.k8s.io/v1
+	kind: StorageClass
+	metadata:
+	  name: managed-premium-retain-sc
+	provisioner: kubernetes.io/azure-disk
+	reclaimPolicy: Retain #Default is Delete, recommended is retain
+	VolumeBindingMode: waitForFirstConsumer #Default is Immediate, recommanded is waitForFirstConsumer
+	allowVolumeExpansion: true
+	parameters:
+	  storageaccounttype: Premium_LRS 
+	  kind: managed #default is shared (other two are managed and dedicated)
+		
+
+	6. Manifest File-3: dotnet-apps is an admin label where application deployed into windows node pools or worker node 
+		            NodeSelector will refere the admin label and deploy application pod to those windows based worker node pools. 
+
+		Manifest File:
+		
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: windows-app1-deployment
+		  labels:
+		    app: windows-app1
+		spec:
+		  replicas: 1
+		  selector:
+		    matchLabels:
+		      app: windows-app1	
+		  template:
+		    metadata:
+		      name: windows-app1	
+		      labels:
+			app: windows-app1	
+		    spec:
+		      containers:
+		      - name: windows-app1	
+			image: mcr.microsoft.com/dotnet/framework/samples:aspnetapp
+			resources:
+			  limits:
+			    cpu: 1
+			    memory: 800M
+			  requests:
+			    cpu: 0.1
+			    memory: 300M
+		      nodeSelector:
+			app: dotnet-apps
+
+	7. Manifest File-4: 
+		NodeSelector will deploy application pod to Virtual node based worker node pools. 
+
+	   apiVersion: apps/v1
+	   kind: Deployment
+	   metadata:
+	     name: vnode-app-deployment
+	     labels:
+	       app: vnode-nginx
+	   spec:
+	     replicas: 1
+	     selector: 
+	       matchlabels:
+	         app: vnode-nginx
+	     template:
+	       metadata:
+		 labels:
+		   app: vnode-nginx
+	        spec:
+		  containers:
+		    - name: vnode-nginx
+		      image: stacksimplify/kubenginx:1.0.0
+		      ports:
+		        - containerPort: 80
+		   nodeSelector:
+		     kubernetes.io/role: agent
+		     beta.kubernets.io/os: linux
+		     type: virtual-kubelet
+		   tolerations:
+		   - key: virtual-kubelet.io/provider
+		     operator: Exists
+		   - key: azure.com/aci
+		     effect: NoSchedule
+
+	8. Commands 
+		kubectl get pods -o wide
+		kubectl get svc				 

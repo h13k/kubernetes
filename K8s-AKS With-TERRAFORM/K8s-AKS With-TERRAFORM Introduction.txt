@@ -1,0 +1,42 @@
+TERRAFORM: 
+
+	1. Use Infrastructure as a code to provision and manage any cloud, infrastructure, or service
+	2. Deliver Infrastructure as a code with Terraform
+	3. Write declarative configuration files.
+	4. Plan and predict changes
+	5. Create a reproducible infrastructure
+		1. Reproducible production, stagging, and development environments
+		2. shared modules for common infrastructure patterns.
+		3. Combine multiple providers consistently
+	        4. Terraform makes it easy to re-use configuration for similar infrastructure, helping us to avoid 
+		   manual mistakes and saves time.
+	6. Commands:
+		1. terraform version
+		2. terraform init
+		3. terraform plan
+		4. terraform validate
+		5. terraform apply
+		6. terraform show
+		7. terraform refresh
+		8. terraform providers
+		9. terraform destroy
+	7. Enhanced Workflow for Teams with Terraform Cloud
+		1. Terraform Cloud is a free to use SaaS application that provides the best workflow for writing and building
+		   infrastructure as code with Terraform
+		2. Share infrastructure as code: Empower our team to rapidly review, comment, and iterate on infrastructure as Code.
+			1. State management (storage, viewing, histroy, and locking).
+			2. Web UI for viewing and approving Terraform runs. 
+			3. Collaborative Runs.
+			4. Private module registry.
+		3. Automate consistent workflows
+			1. Create a pipeline for provisioning infrastructure as Code.
+			2. VCS integration (Azure DevOps, Bitbucket, GitHub, and GitLab).
+			3. Enable GitOps workflow.
+			4. Remote operations - Perform Terraforms runs in a consistent, immutable environment.
+			5. Notifications for run events (via Stack or webhooks).
+			6. Full HTTP API for integrating with other tools and services.
+	8. Providers:
+		Terraform is used to create, manage and update infrastructure resources such as physical machines, VMs, network switches, containers, and more.
+		Almost any infrastructure type can be represented as a source in Terraform.
+		A Provider is responsible for understanding API interactions and exposing resources. Most providers configure a specific infrastructure platform
+		(either cloud or self-hosted). Providers can also offer local utilities for tasks like generating random numbers for unique resource names.

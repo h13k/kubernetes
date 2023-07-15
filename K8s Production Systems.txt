@@ -1,0 +1,14 @@
+K8s Production Systems:
+
+	What is the k8s distribution?
+
+		For any Open source platform will develop thier own simplified versions by 
+		taking base application on top of base application own distributions will be
+		build - Ex: EKS
+			    AKS
+			    Openshift
+			    Tanzu
+			    Rancher
+
+		KOPS-k8s Operations: will be directly manage the k8s clusters and its components
+					life cycle of k8s managed by KOPS

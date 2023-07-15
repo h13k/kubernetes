@@ -1,0 +1,162 @@
+K8s Volumes: More than 25 storage backends, K8S supports
+		
+	
+	1. Persistent Volume
+	2. Persistant Volume claim - PVC
+	3. Storage Class
+
+	Kubernets doesn't give data persistance out of the box
+	Storage that doesn't depend on the pod lifecycle.
+	which node or when the pod in that node will gets restarts so storage must also 
+	be available on all nodes.
+	A Highly available storage needs to survive even if cluster crashes, so storage should be reliable.
+	For DB persistence remote storage should be used.
+ 	
+	Persistent storage which is not for database, Its a directory
+	Persistent volume as a cluster resource like RAM that is used to store data.
+	Persistent volumes are not name-spaced, They are accessisble to the whole cluster.
+	Created via yaml file
+
+7. Storages in Kubernetes: hostpath - Node-->Pod-->Containers-->Images
+
+	1. Container file system is non-fixed - data that is placed inside the container will be only be lasting till container life is exists.
+	2. Pod file system is also same as docker container where as inside the pod container will be there if a container deleted or restarted data will be unavailable.
+	3. To maintain data consistency in pod data saved in external storage - (data will be persistant).
+	4. Docker External file storage plugins: Bind mounts, Tempfs, Volume.
+					Bind mounts: directory will be created in host, directory will be mounted to container.
+					Tempfs: temporary storage for containers, once container deleted all data will be deleted.
+					Volume: Docker will creates volumes for our containers, data will be persistant (\var\lib\docker - path)
+	5. K8s External file storage plugins: hostpath, empty dir, Volumes
+				1. hostpath: directory will be created in host, directory will be mounted to container. 
+				2. empty dir: temporary storage for pods, once pod is deleted data inside container deleted.
+				3. Volumes: Volumes will always be in pod specification
+					Types of Volume mounts: Volume mounts will always be in container specification, because container data needs to be persistant
+								so that volume will be mounted to specific container of a node
+						1. NFS
+						2. EBS
+						3. GCP Persistant disk
+						4. config maps
+						5. Azure disk
+				4. Kubernetes storage types:
+						1. Volumes.
+						2. Persistent Volume - (PV).
+						3. Persistent Volume claim - (PVC).
+						4. Storage.
+	6. Hostpath: It represents a pre-existing directory or file on the host machine that is directly mounted or exposed to the container.
+		     This is generally used to system agents or other priviliged things that are allowed to see the host machine.
+		     Most containers will NOT need this more.
+		
+		
+		apiVersion: v1
+		kind: PersistentVolume
+		metadata:
+		  name: pv-name
+		spec:
+		  capacity:
+		  storage: 5TB
+		VolumeMode: Filesystem
+		accessModes:
+		  - ReadWriteOnce 
+		persistentVolumeReclaimPolicy: Recycle
+		storageClassName: slow
+		mountOptions:
+		  - hard
+		  - nfsvers=4.0
+		nfs:
+		  path: /dir/path/on/nfs/server
+		  server: nfs-server-ip-address
+
+If Google Cloud as a storage backend:
+	
+		apiVersion: v1
+		kind: PersistentVolume
+		metadata:
+		  name: test-volume
+		  labels:
+		    failure domain.beta.kubernetes.to/zone: us-central1-a_ _us-central1-b
+		spec:
+		  capacity: 
+		    storage: 500GB
+		   accessModes:
+		   - ReadWriteOnce
+		   gcePersistentDisk:
+		     pdName: my-data-disk
+		     fsTypes: ext4
+
+	Local storage:
+
+		apiVersion: v1
+		kind: PersistentVolume
+		metadata:
+		  name: pv-name
+		spec:
+		  capacity:
+		  storage: 5TB
+		VolumeMode: Filesystem
+		accessModes:
+		  - ReadWriteOnce 
+		persistentVolumeReclaimPolicy: Recycle
+		storageClassName: slow
+		local: 
+		  path: /dir/path/on/nfs/server
+		nodeAffinity:
+		  required:
+		    nodeSelectorTerms:
+		    - matchExpressions:
+		      - key: kubernetes.io/hostname
+			operator: In
+			values:
+			- example-node
+
+Roles: 
+	K8s Admin set up and maintain the cluster.
+	makes sure that cluster should have enough resources or not.
+	Admin provisions storage resource.
+
+	K8S user that deploy applications in cluster.
+	User creates claim to PV.	
+
+PVC:
+
+		apiVersion: v1
+		kind: PersistentVolumeClaim
+		metadata:
+		  name: pvc-name
+		spec:
+		  storageClassName: manual
+		  VolumeMode: Filesystem
+		  accessModes:
+		  - ReadWriteOnce 
+		  resources:
+		    requests:
+		      storage: 50GB	
+
+	Pod requests the volume through the PV claim - 	PVC
+	Claims tries to find a volume in cluster
+	Volume has the actual storage backend.
+	Claims must be in the same namespace.
+	Once the pod finds the matching persistant volume through the volume claim
+	The volumes is then mounted into the pod and then
+	That Volume can be mounted into the container inside the pod.
+	If we have multiple containers in the pod we can decide to mount this volume in all the containers
+	or just some of the specific containers.
+	The application inside the container can read and write to the storage.
+	When the Pod dies a new one gets created it will have access to the same storage and
+	see all the changes the previous pod or previous containers made.
+	Pod claims storage via PVC
+	PVC requests storage from storage class - SC
+	SC creates PV that meets the needs of the claim	
+
+Storage class Yaml file:
+
+	apiVersion: v1
+	kind: StorageClass
+	metadata:
+	  name: storage-class-name
+	provisioner: kubernetes.io/aws-ebs
+	parameters:
+	  type: io1
+	  iopsPerGB: "10"
+	  fstype: ext4
+
+			 	

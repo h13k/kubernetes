@@ -1,0 +1,56 @@
+Azure AKS - Configure Access TO Multiple AKS Clusters:
+
+	1. Through Azure CLI we can connect AKS multiple clusters:
+
+		1. az aks get-credentials --resource-group aks-rg3 --name aksdemo3
+		2. az aks get-credentials --resource-group aks-rg4 --name aksdemo4
+		3. kubectl config view
+		4. kubectl config current-context 
+		5. kubectl config use-context aksdemo3 - switch from current cluster to different clusters.
+		6. kubectl cluster-info
+		
+	2. Azure Active Directory Integrate with AKS Cluster
+
+		1. Azure AD Group: k8sadmins
+		2. Azure AD User: user1aksadmin 
+
+	3. Kubernetes RBAC Role & RoleBinding with Azure AD on AKS:
+		
+		Restrict Access to k8s namespace level resources using k8s RBAC Role and Role Binding with Azure AD
+		AKS can be configured to use Azure AD for authentication which we have seen in our previous section
+		In addition, we can also configure kuberenetes role-based access control (RBAC) to limit access to cluster
+		resources based a user's indentity or group membership.
+		
+		Create cluster using AKS CLI:
+
+			1. az group create --location centralus --name aks-rg3
+			   az aks create --name aksdemo3 \
+			                 --resource-group aks-rg3 \
+					 --node-count 1 \
+					 --enable-managed-identity \
+					 --generate-ssh-keys  
+	
+		SSH key files have been generated under ~/ .ssh to allow SSH access to the VM. If using machines without permanent storage like Azure Cloud Shell 
+		without an attached file share, back up keys to a safe location. 
+
+	4. Azure AKS, Azure AD Authentication for AKS Admins: (Service: Azure Active Directory, Azure AD Groups, Azure AD Users).
+
+		1. From our desktop using kubectl in a terminal if we have to access the k8s api-server will be accessed through Azure Active Directory Authentication service.
+			1. First we are going to have a k8sadmins group: Azure AD Group: k8sadmins inside Azure Active directory and we are going to integrate Azure AD & AKS.
+			2. An user will be created with an username: user1aksadmin, then users will be able to access cluster.
+			3. Through browser authentication with azure active directory of username, once authentication is completed it can be considered as a device login in
+				in azure, automatically those credentials were cached on our desktop in our respective kubectl .kubconfig folder.
+			4. Once our credentials are cached in our desktop then our request will directly route to aks cluster and can able to access k8s resources.
+
+	5. Create Azure AD Group and user id & associate user id to admin group	
+	6. Enable AKS Cluster with AKS-managed Azure Active Directory feature and add k8s admin group to cluster so that whoever users associated to this admin group will get admin
+	   access to respective cluster.	
+	7. Once user able to access the k8s cluster - automatically azure provides the k8s apiserver-id, client id, config mode, environment, tenant-id
+		users which are not all having access to cluster they will be having only their client cirtificate and its key and token information will be there
+		once authenticated the respective client cirtificate will be approved by azure and user access will be generated under respective group. 
+	8. Our access-tokens and refresh tokens were saved in /.kube/config we can override our credentials and relogin to azure using refresh tokens.
+		az aks get-credentials --resource-group aks-rg5-add --name aksdemo5add --overwrite-existing -> re-login command
+			its nothing but device re-loging our existing access & refresh tokens were removed and once relogged into Azure AD
+			both access & refresh tokens were updated into /.kube/config folder
+	9. To By-pass or override AD Authentication 
+		az aks get-credentials --resource-group aks-rg3 --name aksdemo3 --admin.

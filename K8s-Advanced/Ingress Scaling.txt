@@ -1,0 +1,49 @@
+How do you deal with peaks of traffic in Kubernetes?
+
+You can use an autoscaler, but how should you configure and test it?
+
+To autoscale the Ingress controller based on incoming requests, you need the following:
+
+📈 Metrics (e.g. the requests per second).
+📦 A metrics collector (to store the metrics).
+👯‍♀️ An autoscaler (to act on the data).
+
+📈 Let's start with metrics. The nginx-ingress can be configured to expose Prometheus metrics. You can use `nginx_connections_active`
+	 to count the number of active requests.
+
+📦 Next, you need a way to scrape the metrics. You can install Prometheus to do so.
+
+👯‍♀️ The last piece of the puzzle is the autoscaler. KEDA is an exciting choice because:
+
+1. It's an autoscaler with a metrics server (so I don't need to install 2 different tools).
+2. It's easier to configure than the Prometheus adapter.
+3. I can use the HPA with PromQL.
+
+You can use 🦗 Locust to drive traffic to your cluster and watch the replicas increase as more requests hit the Nginx Ingress controller!
+
+🤔 Can this pattern be extended to any other app?
+🤔 Can you autoscale all microservices on the number of requests received?
+
+Unless they expose the metrics, the answer is no.
+
+However, there's a workaround.
+
+💡 KEDA ships with an HTTP add-on to enable HTTP scaling https://lnkd.in/gFXqbMS3. 
+KEDA injects a sidecar proxy in your pod so that all the HTTP traffic is routed first. 
+Then it measures the number of requests and exposes the metrics. With that data at hand, you can trigger the autoscaler finally.
+
+KEDA is not the only option, though.
+
+
+However, KEDA is pluggable, and the Adapter works exclusively with Prometheus.
+
+During my research, I found these links helpful:
+
+- Prometheus scaler for KEDA https://lnkd.in/gkdyApPh
+- Trigger a Kubernetes HPA with Prometheus metrics https://lnkd.in/gWAKTM67
+- Ingress-nginx exported metrics https://lnkd.in/gHsNDH9E
+- Scaling Celery workers with RabbitMQ on Kubernetes https://lnkd.in/g_HUadi
+- Scaling to zero https://lnkd.in/g4CD2VdC
+
+🔥 You could install the Prometheus Adapter. The metrics will flow from Nginx to Prometheus, and then the Adapter will make them available to Kubernetes. 
+From there, they are consumed by the HPA.

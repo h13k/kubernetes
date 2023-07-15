@@ -1,0 +1,101 @@
+K8s AKS - Production Grade AKS Cluster: (AKS Linux NodePools, AKS Windows NodePools, AKS virtual Nodes)
+
+	Design Production Grade AKS Cluster: using az aks cli
+
+	1. Azure AKS Cluster: Main & Core Components during creation of AKS cluster.  
+			
+			1. Node Pools:
+				There are 3 types of Node pools in AKS Cluster:
+
+					1. System Node Pools: In which K8s master related components will be pre-configured.
+					2. User Node Pools: K8s workloads like deployments, statefullsets, replicas, services will run.
+					                    User Node Pools can be AKS Linux NodePools, AKS Windows NodePools etc.
+					3. Virual Nodes: Where k8s workloads will run in Virtual Nodes
+					(Serverless Feature can enable to run AKS workloads: Virtual kubelet + (ACI) Azure Container Instances). 
+			2. Integrations:
+				1. ACR: Custom containers can be created through Azure Private Container registry (ACR) and integrate to K8s
+					Through ACR containers will gets imported to our k8s deployments through service principle.
+				2. Azure Monitor: Create Log Analytics Workspace and enable it before Integrating Azure Monitor to AKS Cluster.
+						  Effective Cluster Monitoring.
+				3. Azure Policy: Through Azure Policy we can apply Advanced security for k8s resources up to POD Level. 
+			3. Authentication:
+				1. System Assigned Managed Identity (or) Service Principle.
+				2. RBAC - K8s Resource level access for various teams and users in team.
+				3. AKS Managed Azure AD - Users and Groups should get accessed to K8s through AD Authentication.
+			4. Networking:
+				1. Azure CNI will creates networks for both normal and mixed mode deployments
+				2. Standard Load Balancer
+				3. Public Cluster (Restrict Access) Private Cluster: Our k8s cluster api-server can set up either in public
+											N/w or in private N/w. 				
+			5. Basics:
+				Basic Requirements to provision AKS cluster: Regions, K8s version, Zones(Azure will provides default 3 zones).
+			6. Additional:
+				AKS Cluster should create in a seperate Virutal Network 
+				should be in a seperate default subnet for k8s master and workernodes.
+				along with another seperate subnet for (serverless)-virtual nodes and SSH public key to enable and 
+				access k8s worker nodes via ssh terminal.
+			7. Node Selector: Applications can be deployed in different types of NodePools 
+					  using k8s Node Selector concept on Azure AKS.
+					(Node Selector: Virtual Nodes,K8s Nodepools or Worker Nodes-Linux or windows)
+			8. Main Networking route map to set-up Azure k8s cluster is:
+				Azure vNet-->(Subnets For-Node pools- Master,Worker,Serverless Virtual Nodes)-->Load Balancer-->(public-IP - Kubectl access)			
+			9. We should set windows username, password for windows node pools during creation of Azure K8s cluster itself.
+		           ones cluster is created it will not support to windows node pools. 
+
+	2. Create K8s Production Grade Cluster Using Azure-CLI:
+
+		1. Create Resource Group and region for AKS cluster set-up
+		Commands:
+			Edit Export statements to make any changes required as per our environment.
+			AKS_RESOURCE_GROUP=aks-prod
+			AKS_REGION=centralus
+			echo $AKS_RESOURCE_GROUP $AKS_REGION
+			az group create --location ${AKS_REGION} \
+				        --name ${AKS_RESOURCE_GROUP}
+						
+		2. Create Azure Virtual Network
+		3. Create 2 subnets one for regular AKS cluster and second one for Azure Virtual Nodes
+			1. Subnet-1: aks-prod-default
+			2. Subnet-2: aks-prod-virutal-nodes
+		Commands:
+			Edit Export statements to make any changes required as per our environment
+			AKS_VNET=aks-vnet
+			AKS_VNET_ADDRESS_PREFIX=10.0.0.0/8
+			AKS_VNET_SUBNET_DEFAULT=aks-subnet-default
+			AKS_VNET_SUBNET_DEFAULT_PREFIX=10.240.0.0/16
+			AKS_VNET_SUBNET_VIRTUALNODES=aks-subnet-virtual-nodes
+			AKS_VNET_SUBNET_VIRTUALNODES_PREFIX=10.241.0.0/16
+
+		create Virtual Network & default Subnet
+		az network vnet create -g ${AKS_RESOURCE_GROUP} \
+				       -n ${AKS_VNET} \
+				       --address-prefix ${AKS_VNET_ADDRESS_PREFIX} \
+				       --subnet-name ${AKS_VNET_SUBNET_DEFAULT} \
+				       --subnet-prefix ${AKS_VNET_SUBNET_DEFAULT_PREFIX}
+
+		create virtual Nodes subnet in virutal network
+		az network vnet create -g ${AKS_RESOURCE_GROUP} \
+				       -n ${AKS_VNET} \
+				       --name ${AKS_VNET_SUBNET_VIRTUALNODES} \
+				       --address-prefixes ${AKS_VNET_SUBNET_VIRTUALNODES_PREFIX}
+
+		Get Virtual Network defualt subnet id
+		AKS_VENT_SUBNET_DEFAULT_ID=$(az network vnet subnet show \
+					   --resource-group ${AKS_RESOURCE_GROUP} \
+					   --vnet-name ${AKS_VNET} \
+				           --name ${AKS_VNET_SUBNET_DEFAULT} \
+					   --query id \
+					   -o tsv)
+		echo ${AKS_VENT_SUBNET_DEFAULT_ID}
+
+		Create Azure AD Group
+		Create Azure AD User
+		Create SSH Key - Create Folder,SSH KEY
+		Get Azure AD TenantID and Set Windows Username Passwords
+			az aks get-versions --location ${AKS_REGION} -o table
+		#Set windows Server/Node Username & Password
+		AKS_WINDOWS_NODE_USERNAME=azuser
+		AKS_WINDOWS_NODE_PASSWORD="P@ssw0rd1234"
+		echo $AKS_WINDOWS_NODE_USERNAME $AKS_WINDOWS_NODE_PASSWORD
+		
+					

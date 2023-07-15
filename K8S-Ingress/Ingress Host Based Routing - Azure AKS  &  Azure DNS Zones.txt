@@ -1,0 +1,171 @@
+Deligate-Domain-from-AWS-Route53-to-Azure DNS/
+
+1. Domain Registrar:
+
+	1. Domain registrar is a company who can provide domain names which are accessible through internet.
+		Ex: GoDaddy, Wix, Namcheap, AWS Route53
+	2. They will Check if the internet domain that we want to use is available or not after that allows us to purchase it.
+	3. Once the domain name is registered, we are the legal owner for that domain name.
+	4. If we already have an internet domain, we will use our own internet domain to delegate to Azure DNS or any cloud dns service for hosting our application.
+
+2. DNS Zone:
+
+	1. A domain is a unique name in the Domain Name System, for example stacksimplify.com.
+	2. A DNS zone is used to host the DNS records for a particular domain.
+	3. For example, the domain "stacksimplify.com" may contain several DNS records such as	
+			1. mail.stacksimplify.com (for a mail server)
+			2. www.stacksimplify.com (for a website)
+			3. courses.stacksimplify.com (sub domains to host other application)
+
+3. Azure DNS Zones:
+
+	1. Azure DNS is not a domain registrar.
+	2. Azure DNS allows us to host a DNS zone and manage the DNS records for a domain in Azure.
+	3. For DNS queries for a domain to reach Azure DNS, the domain must be delegated to Azure DNS from the parent domain.
+	4. Delegating Domain to Azure DNS: Means The Respective domain which is using our own purchased from some other cloud dns based service or other thrid party related domain registry companies 
+					   where underlying our own domain nameservers which are pointing to our current domain related company will be point to other cloud as per our requirement.
+		Ex: Suppose we had purchased a domain name from AWS Route53, we can delegate AWS domain related name servers to azure cloud 
+			(In backend underlying aws domain name servers got converted into azure namservers under Azure DNS Zone service.)
+	5. Create DNS Zone in Azure, it provides nameservers:
+		kubeoncloud.com: 1. ns1-04.azure-dns.com - Name server 1
+	 			 2. ns2-04.azure-dns.net - Name server 2
+				 3. ns3-04.azure-dns.org - Name server 3
+				 4. ns4-04.azure-dns.info - Name server 4
+	6. Update Nameservers at your domain provider (in our case it may be AWS or Go-daddy):
+		verify before updation: nslookup -type=SOA kubecloud.com	
+					nslookup -type=NS kubecloud.com
+		Go to AWS Route53 (This is my Domain Provider)
+		Go to Services -> Route53 -> Registered Domains -> kubeoncloud.com
+		Click on Add or edit name servers.
+		Update Azure Name servers there and click on Update.
+		Click on Hosted Zones
+		Delete the hosted zone with name kubeoncloud.com
+		verify after updation 
+			nslookup -type=SOA kubecloud.com 8.8.8.8	
+			nslookup -type=NS kubecloud.com 8.8.8.8
+
+4. Create Managed Service Identity (MSI):
+
+	Go to All Services -> Managed Identities -> Add
+	Resource Name: aksdemo1-externaldns-access-to-dnszones
+	subscription: Pay-as-you-go
+	resource group: aks-rg1
+	Location: Central US
+	click on Create
+
+	Add Azure Role Assignment in MSI:
+		
+		Open MSI -> aksdemo1-externaldns-access-to-dnszones
+		Click on Azure Role Assignments -> Add role assignment
+		Scope: Resource group
+		Subscription: Pay-as-you-go
+		Resource group: dns-zones
+		Role: Contributor - (Grants full access to manage all resources, but does not allow us to assign roles in Azure RBAC)
+
+	Make a note of client Id and update in azure.json:
+		Go to overview -> Make a note of "clientID"
+		update in azure.json value for userAssignedIdentityID
+
+	Associate MSI to AKS Cluster VMSS(virtual machine scale set mapped under aks cluster):
+		Go to All services -> VMSS -> open aksdemo1 related VMSS (aks-agentpool-27193923-vmss)
+		Go to Settings -> Identity -> User assigned -> Add -> aksdemo1-externaldns-access-to-dnszone
+		(Note: whatever the pods deployed in VMSS from k8s aks cluster will gets accessed through MSI)
+
+5. Create k8s Secret and Deploy ExternalDNS:
+
+6. External DNS:
+
+	1. It Synchronizes exposed kubernetes services and Ingresses with DNS providers.
+	2. In simple terms, External DNS allows us to control DNS records dynamically via kuberenetes resources in a DNS provider-agnostic way.
+	3. External DNS Supports various cloud DNS Services and external DNS companies: AWS Route53, AWS Cloud Map, Google Cloud DNS, AzureDNS.
+	4. Domain nameservers which are in Azure DNS Zones will be mapped to virtual machine scale sets where application pods are running through MSI(Managed Service Identity-IAM)
+			create Managed service indentity (IAM).   	
+			create a recordset in Azure DNS Zones.	
+			using Managed service indentity (IAM) should map (or) link both Azure DNS Zones and virtual machine scale sets present under AKS Cluster
+				(pod or application hosted under VMscaleset which is inside the aks cluster will be able to update,create or delete the recordsets by DNS Zones)
+	5. Should deploy External DNS as a pod in aks cluster by using external-dns-manifest file, so that it will update the record sets in Azure DNS Zone whenver we deploy the ingress service.
+	6. Should Deploye nginx app.
+	7. Create an Ingress service or manifest file with host option by specifying domain name
+	8. Whenever we deploy the ingress service it will trigger the request External-DNS pod and external-dns will trigger a call to dns zones and it will ensure that access is available through MSI
+		add recordset to dns zone
+		(ingress service -> (External-DNS pod) --> dns zones )
+	9. Managing our dns records via k8s is achieved through external dns.
+	10. External-DNS needs permissions to Azure DNS to modify (Add, Update, Delete DNS Record Sets)
+            We can provide permissions to external DNS pod in 2 ways in Azure 
+		-> Using Azure Service Principal
+		-> Using Azure Managed Service Identity (MSI)
+
+		External DNS Manifest: 	
+			This will help us to add DNS Record Set in Azure DNS Zones using k8s External DNS using host parameter under spec in manifest.
+
+		apiVersion: networking.k8s.io/v1
+		kind: Ingress
+		metadata:
+		  name: nginxapp1-ingress-service
+		  annotations:
+		    kuberenetes.io/ingress.class: "nginx"
+		spec:
+		  rules:
+		    - host: eapp1.kubeoncloud.com
+		      http:
+			paths:
+			  - path: /
+			    pathType: Prefix
+			    backend:
+			      service:
+				name: app1-nginx-clusterip-service
+				port:
+				  number: 80
+
+
+		External DNS Manifest: with multiple DNS hosts managed by k8s ingress
+
+		apiVersion: networking.k8s.io/v1
+		kind: Ingress
+		metadata:
+		  name: ingress-app1 -app2-app3
+		  annotations:
+		    kuberenetes.io/ingress.class: "nginx"
+		spec:
+		  rules:
+		    - host: eapp1.kubeoncloud.com
+		      http:
+		        paths:
+		          - path: /
+			    pathType: Prefix
+			    backend:
+			      service:
+			        name: app1-nginx-clusterip-service
+			        port:
+			          number: 80
+		    - host: eapp2.kubeoncloud.com
+		      http:
+		        paths:
+		          - path: /
+			    pathType: Prefix
+			    backend:
+			      service:
+			        name: app2-nginx-clusterip-service
+			        port:
+			          number: 80
+		   - host: eapp3.kubeoncloud.com
+		     http:
+		       paths:
+		        - path: /
+			  pathType: Prefix
+			  backend:
+			    service:
+			      name: app3-nginx-clusterip-service
+			      port:
+			        number: 80
+
+
+
+
+			
+			
+				
+
+		 
+		
+	

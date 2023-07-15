@@ -1,0 +1,84 @@
+K8s AKS - Cluster Autoscaler - Cluster Autoscaler, Horizontal Pod Autoscaler
+
+	Azure AKS Autoscaling Nodess & Pods:
+
+		Cluster Autoscaler: k8s workernodes will get autoscaled through Autoscaler.
+		Horizontal Pod Autoscaler(hpa): Pods will be scaled up and down based on application traffic.
+
+	Azure Kubernetes Service (AKS) Cluster: (Cluster Autoscaler --> hpa)
+
+		Cluster Autoscaler:  Its a tool that automatically adjusts the size of k8s cluster:
+			Why Autoscaler - Reasons:
+				1. Pods in cluster that failed to run in the cluster due to insuffiecient resources.
+				2. Worker Nodes in cluster that have been underutilized for an extended period of time 
+				    and their pods can be placed on other existing nodes.
+				3. Cluster Autoscaler  modifies nodepools so that they scale out when we need more resources
+				   and scale in when we have underutilized resources.
+
+		Create Cluster with Cluster Autoscaler Enabled:
+			1.Setup Environment variables	
+				export Resource_Group=aks-rg1-autoscaling
+				export REGION=centralus
+				export AKS_CLUSTER=aks-autoscaling-demo
+					echo $RESOURCE_GROUP, $REGION, $AKS_CLUSTER
+			
+			2. Create AKS Cluster and enable the cluster autoscaler
+				az aks create --resource-group ${RESOURCE_GROUP} \
+				              --name ${AKS_CLUSTER} \
+					      --enable-managed-identity \
+					      --generate-ssh-keys \
+					      --node-count 1 \
+					      --enable-cluster-autoscaler \
+					      --min-count 1 \
+			                      --max-count 5
+
+			3. Configure credentials
+				az aks get-credentials --name ${AKS_CLUSTER} --resource-group ${RESOURCE_GROUP}
+
+			4. Manifest File:
+
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+				  name: cluster-autoscaler-demoapp-deployment
+				  labels:
+				    app: ca-nginx
+				spec:
+				  replicas: 1
+				  selector:
+				    matchLabels:
+			              app: ca-nginx
+				   template:
+				     metadata:
+				       labels:
+				         app: ca-nginx
+				     spec:
+				       containers:
+				       - name: ca-nginx
+				         #image: stacksimplify/kubenginx:1.0.0
+					 image: stacksimplify/kube-helloworld:1.0.0
+					 ports:
+					 - containerPort: 8080
+					 resources:
+					   requests:
+					     memory: "200Mi"
+				             cpu: "250m"
+					   limits:
+					     memory: "500Mi"
+					     cpu: "500m"
+				---
+				
+				apiVersion: v1
+				kind: Service
+				metadata:
+				  name: cluster-autoscaler-demoservice-nginx
+				  labels:
+				    app: ca-java-app
+				spec:
+				  type: LoadBalancer
+				  selector:
+				    app: ca-java-app
+				  ports:
+				  - port: 80
+				    targetPort: 8080 
+

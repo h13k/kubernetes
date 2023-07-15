@@ -1,0 +1,45 @@
+Kubernetes Networking devides into 2 Types:
+
+	1. Kubernetes Cluster Communication: Communication between Master & Worker Nodes
+	2. Kubernetes Objects Communication: 
+		Communication between k8s objects in worker nodes.
+			1. Container to Container communication within a Pod.
+			2. Pods & Services Communication.
+			3. Pod to Pod Communication.
+			4. External to Service Communication.
+
+	Every Pod get's its own IP Addresses.
+	Pods can communicate with other Pods with Pod IP addresses without NAT.
+	Agents on a node (system daemons,Kubelet) can communicate with all the Pods in that node.
+	Containers within a Pod share the network namespace (IP and MAC address), so they can communicate
+	with each other using the loopback IP addresses.
+
+	CNI: Container Networking Interface
+
+		 	1. Creation of Bridge Network/interface in the node.
+			2. Manage non-identical CIDR Network ranges.
+			3. Creates Network Namespace.
+			4. Create & attach virtual interfaces (VETH) pairs
+			5. Assign IP's to the VETH pairs.
+			6. Enable all the VETH pairs and loopback interfaces
+			7. Add IP Table Rule & forward the Host Traffic using NAT (SNAT) 
+
+Azure Kubernetes Service Networking Models:
+
+	In AKS, The traditional control plane nodes are hosted by microsoft and provided as a service
+	We dont have to worry about the operational aspect of an api-server, controller manager etc
+
+	In Kubernetes everything revolves around the pods so where do these pods run, These pods run on nodes which 
+	in the case of aks its a virtual machine.
+
+	From networking perspective in aks these pods and nodes can be deployed in two different ways and will break down and demystify each of them:
+
+		The Two networking models we have in kubernetes is KUBENET & Azure CNI
+
+		Kubenet: Is also called as basic networking model which we can build our own virtual network.
+			 In the case of kubenet, every node that is the vms gets an ip from the azure virtual network
+			 For example the default ip space of azure virtual network is upto 10.2.0.0/16, so the nodes deploying using kubenet
+			 would reside inside of a subnet in this virtual network let's say 10.2.1.0/24 and get an ip address from this range
+			    
+		Azure CNI: Its an advanced networking model which we can build our own virtual network or Aks will create a new virtual network.
+			      

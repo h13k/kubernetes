@@ -1,0 +1,143 @@
+K8s - Resources Requests & limits:
+
+	1. We can specify how much each container in a pod needs the resources like CPU & Memory.
+	2. When we provide this information in our pod definition for a specific container, the scheduler uses this information 
+	   to decide which node to place the pod based on availability of k8s worker Node CPU and Memory Resources.
+	3. When we specify a resource limit for a container, the kubelet enforces those `limits` so that the running container is not
+	   allowed to use more of that resource than the limit you set.
+	4. The kubelet also reserves atleast the request amount of that system resource specifically for that container to use.
+		We should defined Reuests & limits for a specific container in a deployment manifest.
+
+
+	Manifest file:
+
+		apiVersion: app/v1
+		kind: Deployment
+		metadata:
+		  name: app1-nginx-deployment
+		  labels:
+		    app: app1-nginx
+		spec: 
+		  replicas: 2
+		  selector:
+		    matchlabels:
+		      app: pp1-nginx
+		  template:
+		    metadata:
+		      labels:
+      			app: app1-nginx
+		    spec:
+		      containers:
+		        - name: app1-nginx
+			  image: stacksimplify/kube-nginxapp1:1.0.0
+			  imagePullPolicy: Always
+			  ports:
+			    - containerPort: 80
+			  resources:
+			    requests:
+			      cpu: "100m"
+			      memory: "128Mi"
+			    limits:
+			      cpu: "200m"
+			      memory: "256Mi"
+
+	App-Service Manifest file:
+
+		apiVersion: v1
+		kind: Service
+		metadata:
+		  name: app1-nginx-clusterip-service
+		  labels:
+		    app: app1-nginx
+		spec:
+		  type: LoadBalancer
+		  selector:
+		    app: app1-nginx
+		  ports:
+		    - port: 80
+		      targetPort: 80
+
+K8s-Namespaces: Its a virtual cluster inside the k8s physical or cloud cluster
+	Cluster --> Node --> Namespace --> Pod --> Container
+
+	1. Namespaces are also called Virtual clusters in our physical k8s cluster
+	2. We use this in environments where we have many users spread across multiple teams or projects.
+	3. CLusters with ten's of users ideally don't need to use namespaces
+	4. Benefits:
+		Creates an isolated boundary from other k8s objects
+		We can limit the resources like CPU, Memory on per namespace basis (Resource Quota).
+	5. We create multiple namespaces per environment in a single cluster
+		dev Namespace: dev environment
+		qa Namespace: qa environment
+		staging Namespace: staging environment 
+	6. Namspace Naming conventions: <service-name>.<namespace-name>.svc.cluster.local 
+			Ex:  app1.default.svc.cluster.local
+			     app1.dev.svc.cluster.local
+			     app1.stage.svc.cluster.local
+			     app1.qa.svc.cluster.local	
+	7. Commands: kubectl get pods,svc,deploy -n namespacename 
+		     kubectl get limits -n dev3
+	  	     kubectl get quota -n dev3
+
+K8s Namespaces - Limit Range:
+
+	1. By default containers run with unbounded compute resources on a k8s cluster.
+	2. With Resource quotas, cluster administrators can restrict resource consumption and creation on a namespace basis.
+	3. Within a namespace, a Pod or container can consume as much CPU and memory as defined by the namespace's resource quota.
+	4. There is a concern that one pod or container could monoplize all available resources
+	5. A LimitRange is a policy to constrain resource allocations (to pods or containers) in a namespace.
+		1. Min/Max computer resources usage per pod or container in a namespace.
+		2. Min/Max storage request per PersistantVolumeClaim in a namespace.
+		3. Enforce Ratio b/w request and limit for a resource in a namespace.
+		4. Set default request/limit for compute resources in a namespace and automatically inject them to containers at runtime.
+
+	Manifest File:
+
+	apiVersion: v1
+	kind: Namespace
+	metadata:
+	  name: dev3
+	---
+	apiVersion: v1
+	kind: LimitRange
+	metadata: 
+	  name: default-cpu-mem-limit-range
+	  namespace: dev3
+	spec:
+	  limits:
+	    - default:
+		memory: "512Mi"
+		cpu: "500m"
+	      defaultRequest:
+		memory: "256Mi"
+		cpu: "300m"
+	      type: Container	
+
+K8s Namespaces - Resource Quota:
+
+	when several users or teams share a cluster with a fixed number of nodes, there is a concern that one team could use more than its fair share of resources.
+	Resource quotas are a tool for administrators to address this concern.
+	A Resource quota, defined by a ResourceQuota object, provides contraints that limit aggregate resource consumption per namespace.
+	It can limit the quantity of objects that can be created in a namespace by type, as well as the total amount of compute resources that may be consumed by 
+	resources in that project.
+
+	Resource Quota Manifest:
+
+	apiVersion: v1
+	kind: ResourceQuota
+	metadata:
+	  name: ns-resource-quota
+	  namespace: dev3
+	spec:
+	  hard:
+	    requests.cpu: "1"
+	    requests.memory: 1Gi
+	    limits.cpu: "2"
+	    limits.memory: 2Gi
+	    pods: "5"	
+	    configmaps: "5"
+	    persistantvolumeclaims: "5"
+	    secrets: "5"	
+	    services: "5"	
+
+		

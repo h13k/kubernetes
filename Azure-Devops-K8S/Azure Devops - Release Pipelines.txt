@@ -1,0 +1,30 @@
+Release Pipelines:
+
+	To achieve Continous Delivery we should use Release Pipelines.
+
+	Release pipelines for pre-production & production stages:
+
+	CI build -> Dev		QA		Pre-production		Production   
+		    
+		    Dev		QA		Pre-production		Production   -	Stages
+		    Servers	Servers		Servers			Servers
+
+	1. Create Namespaces in k8s cluster and map those namespaces which are in k8s cluster to azure devops pipelines through service connection:
+
+	kubectl get namespace dev
+	kubectl get namespace qa
+	kubectl get namespace staging
+	kubectl get namespace prod 
+
+	Create service connections for Dev, QA, Staging and Prod Namespace in k8s cluster.
+	Add Artifact
+	Enable Continous deployment trigger.
+	Create Dev Stage and Test
+		Stage Name: Dev
+		Create Task
+		Agent Job: change to Ubuntu Linux (latest)
+	Add Task: Create Secret
+	display Name: Create Secret to allow image pull from ACR
+	Action: Create secret
+	Deploy to AKS
+	we can create multiple release pipelines  by cloning existing dev namespace related release pipeline 
